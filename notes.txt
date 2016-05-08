@@ -1,0 +1,25 @@
+NOTES fOR JASPER ARCADE
+currently...
+  publish and subscribe model
+  work on injecting mutators into enumClasses
+  change all " ? : ;" statements to "||"
+  
+cleaner API...
+  refactor class mutator functions to get x, y, w, h from mutator object
+
+assets...
+  create a json schema for entities. can integrate into tiled?
+  figure out audio. Could use Howler js
+
+the basic functionality for entitites should include:
+  private animation classes. <-- needs testing
+  gui entities. <-- haven't started
+  
+
+on the table...
+  physics?
+    have a physics component that wraps entities
+    and changes the x and y based on vector math
+    with other colliders
+  Pretty much got it =(
+  

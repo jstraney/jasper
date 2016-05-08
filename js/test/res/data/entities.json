@@ -1,0 +1,1148 @@
+{
+	"entity" :
+	{
+		"name":"Clay Golem",
+		"type":"monster",
+		"desc":"One of the first people",
+		"longDesc":"The first people were made of clay and still wander the earth that made them. They resent those made of flesh and blood because they drove them into their subterranean temples. They occasionally go above ground to forage for tree bark and rotten stumps to eat. They are classified as giants.",
+		"expx": 6000,
+		"subtype":"troop",
+		"attackPer": 1,
+		"soundsLike":"lion",
+		
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 200,
+			"maxhp": 200,
+			"str": 80,
+			"end": 30,
+			"wis": 16,
+			"knw": 15,
+			"spd": 2,
+			"vis": 7,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"fps":5,
+			"looping": true,
+			"start": 447,
+			"stop": 451
+		}, 
+		
+		"wu":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 452,
+			"stop": 456
+		}, 
+		"wl":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 457,
+			"stop": 461
+		},
+		 
+		"wr":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 462,
+			"stop": 466
+		},
+		
+		"ad" :
+		{
+			"fps": 6,
+			"start": 467,
+			"stop": 472
+		},
+		 
+		"au":
+		{
+			"fps": 6,
+			"start": 473,
+			"stop": 477
+		}, 
+		"al" :
+		{
+			"fps": 6,
+			"start": 478,
+			"stop": 482
+		},
+		
+		"ar" :
+		{
+			"fps": 6,
+			"start": 483,
+			"stop": 487
+		},
+		"pd":
+		{
+			"def":7,
+			"fps": 8,
+			"start": 488,
+			"stop":495
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Dream Catcher",
+		"type":"monster",
+		"desc":"Astral demon",
+		"expx": 3000,
+		"subtype":"troop",
+		"attackPer": 1,
+		"longDesc":"Dream catchers sit on the walls between our concious world and the world of dreams. They play games with each other while they wait for dreams to pass from their world into ours through the psyche of mankind. They catch and eat these dreams before they enter a sleeper. Sometimes they emerge physically to cause harm and mischief.",
+		"soundsLike":"jaguar",
+		"phrases": [
+			"I know you.",
+			"Do you remember me?",
+			"!!!"
+		],
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 150,
+			"maxhp": 150,
+			"str": 40,
+			"end": 30,
+			"wis": 16,
+			"knw": 15,
+			"spd": 2,
+			"vis": 7,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"fps":5,
+			"looping": true,
+			"start": 351,
+			"stop": 356
+		}, 
+		
+		"wu":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 357,
+			"stop": 362
+		}, 
+		"wr":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 363,
+			"stop": 367
+		},
+		 
+		"wl":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 368,
+			"stop": 372
+		},
+		
+		"ad" :
+		{
+			"fps": 6,
+			"start": 373,
+			"stop": 376
+		},
+		 
+		"au":
+		{
+			"fps": 6,
+			"start": 377,
+			"stop": 380
+		}, 
+		"ar" :
+		{
+			"fps": 6,
+			"start": 381,
+			"stop": 384
+		},
+		
+		"al" :
+		{
+			"fps": 6,
+			"start": 385,
+			"stop": 388
+		},
+		"pd":
+		{
+			"def":9,
+			"fps": 8,
+			"start": 389,
+			"stop":398
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Frank",
+		"type":"monster",
+		"desc":"a faction of humans named frank",
+		"expx": 400,
+		"subtype":"troop",
+		"attackPer": 2,
+		"phrases": [
+			"=0",
+			"o hai",
+			"don't like!"
+		],
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 50,
+			"maxhp": 50,
+			"str": 10,
+			"end": 15,
+			"wis": 8,
+			"knw": 10,
+			"spd": 2,
+			"vis": 5,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"fps":12,
+			"looping": true,
+			"start": 295,
+			"stop": 301
+		}, 
+		
+		"wu":
+		{
+			"fps":12,
+			"looping": true,
+			"start": 302,
+			"stop": 309
+		}, 
+		"wr":
+		{
+			"fps":12,
+			"looping": true,
+			"start": 310,
+			"stop": 317
+		},
+		 
+		"wl":
+		{
+			"fps":12,
+			"looping": true,
+			"start": 318,
+			"stop": 325
+		},
+		
+		"ad" :
+		{
+			"fps": 6,
+			"start": 326,
+			"stop": 330
+		},
+		 
+		"au":
+		{
+			"fps": 6,
+			"start": 331,
+			"stop": 335
+		}, 
+		"ar" :
+		{
+			"fps": 6,
+			"start": 336,
+			"stop": 340
+		},
+		
+		"al" :
+		{
+			"fps": 6,
+			"start": 341,
+			"stop": 345
+		},
+		"pd":
+		{
+			"def":4,
+			"fps": 8,
+			"start": 346,
+			"stop":350
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Fury",
+		"type":"monster",
+		"desc":"punishment by fire satsfies it",
+		"expx": 4000,
+		"subtype":"troop",
+		"attackPer": 2,
+		"longDesc":"A fury is an imp that has been blessed by Thune with the gift of fire. A fury is considerably giant, standing at eight feet tall. They enjoy setting things on fire, and their wings are just to look cool.",
+		"soundsLike":"jaguar",
+		"phrases": [
+			"3th&d tw!h !fr3",
+			"! 1w!1 0nsm3cu u0y",
+			"1!s3m 3hnw ! 6nru 0yu"
+		],
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 150,
+			"maxhp": 150,
+			"str": 50,
+			"end": 25,
+			"wis": 10,
+			"knw": 20,
+			"spd": 2,
+			"vis": 6,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"fps":5,
+			"looping": true,
+			"start": 245,
+			"stop": 249
+		}, 
+		
+		"wu":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 250,
+			"stop": 254
+		}, 
+		"wl":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 255,
+			"stop": 259
+		},
+		 
+		"wr":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 260,
+			"stop": 264
+		},
+		
+		"ad" :
+		{
+			"fps": 6,
+			"start": 265,
+			"stop": 270
+		},
+		 
+		"au":
+		{
+			"fps": 6,
+			"start": 271,
+			"stop": 275
+		}, 
+		"al" :
+		{
+			"fps": 6,
+			"start": 276,
+			"stop": 280
+		},
+		
+		"ar" :
+		{
+			"fps": 6,
+			"start": 281,
+			"stop": 285
+		},
+		"pd":
+		{
+			"def":7,
+			"fps": 8,
+			"start": 286,
+			"stop":293
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Imp",
+		"type":"monster",
+		"desc":"A smelly little beast",
+		"longDesc":"The imps are disciples of Thune. They are not very strong but are devoted to their master's cause: to consume the living. An imp on average weighs no more than a human child and is twice as ugly. Imps and their kin will disolve into green liquid upon death. Don't eat it.",
+		"soundsLike":"squee",
+		"expx": 200,
+		"subtype":"troop",
+		"attackPer": 0.5,
+		"phrases": [
+			"grrrrr",
+			"grawrr",
+			"frood!"
+		],
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 20,
+			"maxhp": 15,
+			"str": 5,
+			"end": 10,
+			"wis": 10,
+			"knw": 10,
+			"spd": 2,
+			"vis": 6,
+			"gold": 5,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"looping": true,
+			"start": 0,
+			"stop": 9
+		}, 
+		
+		"wu":
+		{
+			"looping": true,
+			"start": 10,
+			"stop": 19
+		}, 
+		"wr":
+		{
+			"looping": true,
+			"start": 20,
+			"stop": 29
+		},
+		 
+		"wl":
+		{
+			"looping": true,
+			"start": 30,
+			"stop": 39
+		},
+		
+		"ad" :
+		{
+			"start": 40,
+			"stop": 49
+		},
+		 
+		"au":
+		{
+			"start": 50,
+			"stop": 59
+		}, 
+		"ar" :
+		{
+			"start": 60,
+			"stop": 69
+		},
+		
+		"al" :
+		{
+			"start": 70,
+			"stop": 79
+		},
+		
+		"pd" :
+		{
+			"fps": 12,
+			"def":9,
+			"start": 80,
+			"stop": 89
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Mammoth louse",
+		"type":"monster",
+		"desc":"A large parasite",
+		"longDesc":"The mammoth louse is not a vicious predator, but is instead an irrate parasite. They will live on the hair of an enormous animal. Without a host, they meander aimless and prone to aggrivation. They are slow, but tenacious.",
+		"expx": 300,
+		"subtype":"troop",
+		"attackPer": 2,
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 60,
+			"maxhp": 60,
+			"str": 10,
+			"end": 20,
+			"wis": 1,
+			"knw": 1,
+			"spd": 1,
+			"vis": 4,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"fps":6,
+			"looping": true,
+			"start": 208,
+			"stop": 211
+		}, 
+		
+		"wu":
+		{
+			"fps":10,
+			"looping": true,
+			"start": 212,
+			"stop": 215
+		}, 
+		"wr":
+		{
+			"fps":10,
+			"looping": true,
+			"start": 220,
+			"stop": 223
+		},
+		 
+		"wl":
+		{
+			"fps":10,
+			"looping": true,
+			"start": 216,
+			"stop": 219
+		},
+		
+		"ad" :
+		{
+			"fps": 6,
+			"start": 224,
+			"stop": 227
+		},
+		 
+		"au":
+		{
+			"fps": 6,
+			"start": 228,
+			"stop": 231
+		}, 
+		"ar" :
+		{
+			"fps": 6,
+			"start": 236,
+			"stop": 239
+		},
+		
+		"al" :
+		{
+			"fps": 6,
+			"start": 232,
+			"stop": 235
+		},
+		"pd":
+		{
+			"def":4,
+			"fps": 6,
+			"start": 240,
+			"stop":244
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Ogre",
+		"type":"monster",
+		"desc":"A man eater.",
+		"longDesc": "The ogres are capable of consuming their own weight in meat a day. Considering that an ogre is tall, heavy and slow, and not gifted at trapping animals they are not always able to collect their meals. This means that ogres are virtually always hungry.",
+
+		"subtype":"troop",
+		"expx": 300,
+		"attackPer": 2,
+		"phrases": [
+			"3shRf n03b$!",
+			"ur0y 1odob $i n3im.",
+			"n0e l$h&l ru$vi3v.",
+			"dl0h t$1i1 3t1i1t &mn.",
+			"I n&c m1$31 3r&f."
+		],
+		"stats":
+		{
+			"hp": 50,
+			"maxhp": 30,
+			"str": 10,
+			"end": 15,
+			"arm": 0,
+			"wis": 5,
+			"knw": 8,
+			"spd": 1,
+			"vis": 6,
+			"gold": 15,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"looping": true,
+			"start": 90,
+			"stop": 97
+		}, 
+		
+		"wu":
+		{
+			"looping": true,
+			"start": 98,
+			"stop": 105
+		}, 
+		"wr":
+		{
+			"looping": true,
+			"start": 106,
+			"stop": 113
+		},
+		 
+		"wl":
+		{
+			"looping": true,
+			"start": 114,
+			"stop": 121
+		},
+		
+		"ad" :
+		{
+			"fps": 5,
+			"start": 122,
+			"stop": 126
+		},
+		 
+		"au":
+		{
+			"fps": 5,
+			"start": 127,
+			"stop": 131
+		}, 
+		"ar" :
+		{
+			"fps": 5,
+			"start": 132,
+			"stop": 136
+		},
+		
+		"al" :
+		{
+			"fps": 5,
+			"start": 137,
+			"stop": 141
+		},
+		
+		"pd" :
+		{
+			"fps": 5,
+			"def":4,
+			"start": 142,
+			"stop": 146
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Orb",
+		"type":"monster",
+		"desc":"It will take you",
+		"subtype":"immortal",
+		"longDesc":"No on believes their eyes when they see an orb. It is unnaturally pink, and unnusually quiet. Although the orb is very slow, there is no way to survive its attack. There is no known way to kill it. It's difficult to escape its vision once it sees you. ",
+		"expx": 2000,
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 100,
+			"maxhp": 100,
+			"str": 500,
+			"end": 0,
+			"wis": 0,
+			"knw": 0,
+			"spd": 1,
+			"vis": 10,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"looping": true,
+			"start": 147,
+			"stop": 153
+		}, 
+		
+		"wu":
+		{
+			"looping": true,
+			"start": 147,
+			"stop": 153
+		}, 
+		"wr":
+		{
+			"looping": true,
+			"start": 147,
+			"stop": 153
+		},
+		 
+		"wl":
+		{
+			"looping": true,
+			"start": 147,
+			"stop": 152
+		},
+		
+		"ad" :
+		{
+			"fps": 12,
+			"start": 153,
+			"stop": 159
+		},
+		 
+		"au":
+		{
+			"fps": 12,
+			"start": 153,
+			"stop": 159
+		}, 
+		"ar" :
+		{
+			"fps": 12,
+			"start": 153,
+			"stop": 159
+		},
+		
+		"al" :
+		{
+			"fps": 12,
+			"start": 153,
+			"stop": 159
+		},
+		"pd" :
+		{
+			"def": 3,
+			"fps": 6,
+			"start": 153,
+			"stop": 156
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"player",
+		"type":"player",
+		"desc":"A fierce Warrior",
+		"subtype":"troop",
+		"expx": 0,
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 30,
+			"maxhp": 30,
+			"mag":30,
+			"maxMag":30,
+			"arm": 0,
+			"str": 15,
+			"end": 10,
+			"wis": 10,
+			"knw": 10,
+			"spd": 2,
+			"gold": 50,
+			"exp": 0,
+			"lvlup": 1000
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"looping": true,
+			"start": 0,
+			"stop": 7
+		}, 
+		
+		"wu":
+		{
+			"looping": true,
+			"start": 8,
+			"stop": 15
+		}, 
+		"wr":
+		{
+			"looping": true,
+			"start": 16,
+			"stop": 23
+		},
+		 
+		"wl":
+		{
+			"looping": true,
+			"start": 24,
+			"stop": 31
+		},
+		
+		"ad" :
+		{
+			"fps": 16,
+			"start": 32,
+			"stop": 36
+		},
+		 
+		"au":
+		{
+			"fps": 16,
+			"start": 37,
+			"stop": 41
+		}, 
+		"ar" :
+		{
+			"fps": 16,
+			"start": 42,
+			"stop": 46
+		},
+		
+		"al" :
+		{
+			"fps": 16,
+			"start": 47,
+			"stop": 51
+		},
+		
+		"pd" :
+		{
+			"fps": 8,
+			"def": 4,
+			"start": 52,
+			"stop": 56
+		}
+	},
+	"entity" :
+	{
+		"name":"Sorrow",
+		"type":"monster",
+		"desc":"An ice giant",
+		"longDesc" : "A species of giant that is made of perpetual ice. Often the result of a warlocks spell or ritual. They will survive their creators  centuries after they have passed. Anger and confusion permeate this beings existential conflicts.",
+		"expx": 7000,
+		"subtype":"troop",
+		"attackPer": 1,
+		"soundsLike":"predator",
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 250,
+			"maxhp": 250,
+			"str": 80,
+			"end": 30,
+			"wis": 16,
+			"knw": 15,
+			"spd": 2,
+			"vis": 7,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"fps":5,
+			"looping": true,
+			"start": 496,
+			"stop": 500
+		}, 
+		
+		"wu":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 501,
+			"stop": 505
+		}, 
+		"wl":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 506,
+			"stop": 510
+		},
+		 
+		"wr":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 511,
+			"stop": 515
+		},
+		
+		"ad" :
+		{
+			"fps": 6,
+			"start": 516,
+			"stop": 521
+		},
+		 
+		"au":
+		{
+			"fps": 6,
+			"start": 522,
+			"stop": 526
+		}, 
+		"al" :
+		{
+			"fps": 6,
+			"start": 527,
+			"stop": 531
+		},
+		
+		"ar" :
+		{
+			"fps": 6,
+			"start": 532,
+			"stop": 536
+		},
+		"pd":
+		{
+			"def":7,
+			"fps": 8,
+			"start": 537,
+			"stop": 544
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Troll",
+		"type":"monster",
+		"desc":"A large blue humanoid",
+		"longDesc": "A large blue creature that is intent on causing trouble. Stay away, as its fists are awful.",
+		"expx": 1000,
+		"subtype":"troop",
+		"soundsLike":"shrill",
+		"attackPer": 2,
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 60,
+			"maxhp": 60,
+			"str": 20,
+			"end": 15,
+			"wis": 2,
+			"knw": 15,
+			"spd": 2,
+			"vis": 6,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"fps":6,
+			"looping": true,
+			"start": 160,
+			"stop": 165
+		}, 
+		
+		"wu":
+		{
+			"fps":6,
+			"looping": true,
+			"start": 166,
+			"stop": 171
+		}, 
+		"wr":
+		{
+			"fps":6,
+			"looping": true,
+			"start": 172,
+			"stop": 176
+		},
+		 
+		"wl":
+		{
+			"fps":6,
+			"looping": true,
+			"start": 177,
+			"stop": 181
+		},
+		
+		"ad" :
+		{
+			"fps": 6,
+			"start": 182,
+			"stop": 185
+		},
+		 
+		"au":
+		{
+			"fps": 6,
+			"start": 186,
+			"stop": 189
+		}, 
+		"ar" :
+		{
+			"fps": 6,
+			"start": 190,
+			"stop": 193
+		},
+		
+		"al" :
+		{
+			"fps": 6,
+			"start": 194,
+			"stop": 197
+		},
+		"pd":
+		{
+			"def":9,
+			"fps": 6,
+			"start": 198,
+			"stop":207
+		}
+		
+	},
+	"entity" :
+	{
+		"name":"Stygian Knight",
+		"type":"monster",
+		"desc":"Astral demon",
+		"expx": 6000,
+		"subtype":"troop",
+		"attackPer": 1,
+		"longDesc":"This emmissary of darkness is responsible for nightmares in the sleeping and anxiety in those who are awake. It is the strongest of the astral demons and is a sight that person should hope to see, though they watch us eternally.",
+		"soundsLike":"lion",
+		"stats":
+		{
+			"age":"unknown",
+			"hp": 200,
+			"maxhp": 200,
+			"str": 80,
+			"end": 30,
+			"wis": 16,
+			"knw": 15,
+			"spd": 2,
+			"vis": 7,
+			"exp": 0,
+			"lvlup": 1000
+			
+		}
+	},
+	
+	"animations":
+	{
+		"wd" :
+		{
+			"fps":5,
+			"looping": true,
+			"start": 399,
+			"stop": 404
+		}, 
+		
+		"wu":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 405,
+			"stop": 410
+		}, 
+		"wr":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 411,
+			"stop": 415
+		},
+		 
+		"wl":
+		{
+			"fps":5,
+			"looping": true,
+			"start": 416,
+			"stop": 420
+		},
+		
+		"ad" :
+		{
+			"fps": 6,
+			"start": 421,
+			"stop": 424
+		},
+		 
+		"au":
+		{
+			"fps": 6,
+			"start": 425,
+			"stop": 428
+		}, 
+		"ar" :
+		{
+			"fps": 6,
+			"start": 429,
+			"stop": 432
+		},
+		
+		"al" :
+		{
+			"fps": 6,
+			"start": 433,
+			"stop": 436
+		},
+		"pd":
+		{
+			"def":9,
+			"fps": 8,
+			"start": 437,
+			"stop":446
+		}
+		
+	}
+}
