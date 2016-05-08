@@ -13,7 +13,7 @@ be intuitive and modular. Jasper a framework that:
 First thing is to download Japser and link to the javascript file in
 your webpage. In this repository, use the copy under "dist".
 
-'''
+'''html
 <html>
   <head>
     <!-- Be sure to include the game framework -->
@@ -30,7 +30,7 @@ your webpage. In this repository, use the copy under "dist".
 Using the above example, you have a file of your own called
 "myGame.js" that uses Jasper. Here's what might go into that file.
 
-'''
+'''js
 // A game be your main menu, game over screen, or the part where you
 // play. Be sure to include at least one.
 
