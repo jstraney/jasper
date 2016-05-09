@@ -15,13 +15,24 @@ gulp.task("js", function () {
       .pipe(order([
         'xml2json.min.js',
         'jasper.js',
-        '*.js'
+        'event.js',
+        'asset.js',
+        'entity.js',
+        'controller.js',
+        'graphics.js',
+        'init.js'
         ]))
       .pipe(plumber())
       .pipe(concat("jasper.js"))
       .pipe(gulp.dest("js/test/"))
+      .pipe(gulp.dest("js/dist/"))
+      
+      
+    gulp.src("js/dist/jasper.js")
+      .pipe(concat("jasper.min.js"))
       .pipe(uglify())
-      .pipe(gulp.dest("js/dist/"));
+      .pipe(gulp.dest("."))
+      .pipe(gulp.dest("../test"));
   });
 });
 
@@ -36,12 +47,5 @@ gulp.task("css", function () {
   });
 });
 
-gulp.task("serve", function () {
-  browserSync.init({
-     server: {
-       baseDir: "./"
-     }
-  });
-});
 
-gulp.task("default", ["js", "css", "serve"]);
+gulp.task("default", ["js", "css"]);
