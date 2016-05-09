@@ -1,1 +1,911 @@
-function X2JS(t){function e(){void 0===t.escapeMode&&(t.escapeMode=!0),t.attributePrefix=t.attributePrefix||"_",t.arrayAccessForm=t.arrayAccessForm||"none",t.emptyNodeForm=t.emptyNodeForm||"text",void 0===t.enableToStringFunc&&(t.enableToStringFunc=!0),t.arrayAccessFormPaths=t.arrayAccessFormPaths||[],void 0===t.skipEmptyTextNodesForObj&&(t.skipEmptyTextNodesForObj=!0),void 0===t.stripWhitespaces&&(t.stripWhitespaces=!0),t.datetimeAccessFormPaths=t.datetimeAccessFormPaths||[]}function n(){function t(t){var e=String(t);return 1===e.length&&(e="0"+e),e}"function"!=typeof String.prototype.trim&&(String.prototype.trim=function(){return this.replace(/^\s+|^\n+|(\s|\n)+$/g,"")}),"function"!=typeof Date.prototype.toISOString&&(Date.prototype.toISOString=function(){return this.getUTCFullYear()+"-"+t(this.getUTCMonth()+1)+"-"+t(this.getUTCDate())+"T"+t(this.getUTCHours())+":"+t(this.getUTCMinutes())+":"+t(this.getUTCSeconds())+"."+String((this.getUTCMilliseconds()/1e3).toFixed(3)).slice(2,5)+"Z"})}function r(t){var e=t.localName;return null==e&&(e=t.baseName),null!=e&&""!=e||(e=t.nodeName),e}function i(t){return t.prefix}function a(t){return"string"==typeof t?t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#x27;").replace(/\//g,"&#x2F;"):t}function o(t){return t.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#x27;/g,"'").replace(/&#x2F;/g,"/")}function s(e,n,r){switch(t.arrayAccessForm){case"property":e[n]instanceof Array?e[n+"_asArray"]=e[n]:e[n+"_asArray"]=[e[n]]}if(!(e[n]instanceof Array)&&t.arrayAccessFormPaths.length>0){for(var i=0;i<t.arrayAccessFormPaths.length;i++){var a=t.arrayAccessFormPaths[i];if("string"==typeof a){if(a==r)break}else if(a instanceof RegExp){if(a.test(r))break}else if("function"==typeof a&&a(e,n,r))break}i!=t.arrayAccessFormPaths.length&&(e[n]=[e[n]])}}function u(t){var e=t.split(/[-T:+Z]/g),n=new Date(e[0],e[1]-1,e[2]),r=e[5].split(".");if(n.setHours(e[3],e[4],r[0]),r.length>1&&n.setMilliseconds(r[1]),e[6]&&e[7]){var i=60*e[6]+Number(e[7]),a=/\d\d-\d\d:\d\d$/.test(t)?"-":"+";i=0+("-"==a?-1*i:i),n.setMinutes(n.getMinutes()-i-n.getTimezoneOffset())}else-1!==t.indexOf("Z",t.length-1)&&(n=new Date(Date.UTC(n.getFullYear(),n.getMonth(),n.getDate(),n.getHours(),n.getMinutes(),n.getSeconds(),n.getMilliseconds())));return n}function l(e,n,r){if(t.datetimeAccessFormPaths.length>0){for(var i=r.split(".#")[0],a=0;a<t.datetimeAccessFormPaths.length;a++){var o=t.datetimeAccessFormPaths[a];if("string"==typeof o){if(o==i)break}else if(o instanceof RegExp){if(o.test(i))break}else if("function"==typeof o&&o(obj,n,i))break}return a!=t.datetimeAccessFormPaths.length?u(e):e}return e}function c(e,n){if(e.nodeType==T.DOCUMENT_NODE){for(var a=new Object,u=e.childNodes,f=0;f<u.length;f++){var d=u.item(f);if(d.nodeType==T.ELEMENT_NODE){var h=r(d);a[h]=c(d,h)}}return a}if(e.nodeType==T.ELEMENT_NODE){var a=new Object;a.__cnt=0;for(var u=e.childNodes,f=0;f<u.length;f++){var d=u.item(f),h=r(d);d.nodeType!=T.COMMENT_NODE&&(a.__cnt++,null==a[h]?(a[h]=c(d,n+"."+h),s(a,h,n+"."+h)):(null!=a[h]&&(a[h]instanceof Array||(a[h]=[a[h]],s(a,h,n+"."+h))),a[h][a[h].length]=c(d,n+"."+h)))}for(var m=0;m<e.attributes.length;m++){var p=e.attributes.item(m);a.__cnt++,a[t.attributePrefix+p.name]=p.value}var g=i(e);return null!=g&&""!=g&&(a.__cnt++,a.__prefix=g),null!=a["#text"]&&(a.__text=a["#text"],a.__text instanceof Array&&(a.__text=a.__text.join("\n")),t.escapeMode&&(a.__text=o(a.__text)),t.stripWhitespaces&&(a.__text=a.__text.trim()),delete a["#text"],"property"==t.arrayAccessForm&&delete a["#text_asArray"],a.__text=l(a.__text,h,n+"."+h)),null!=a["#cdata-section"]&&(a.__cdata=a["#cdata-section"],delete a["#cdata-section"],"property"==t.arrayAccessForm&&delete a["#cdata-section_asArray"]),1==a.__cnt&&null!=a.__text?a=a.__text:0==a.__cnt&&"text"==t.emptyNodeForm?a="":a.__cnt>1&&null!=a.__text&&t.skipEmptyTextNodesForObj&&(t.stripWhitespaces&&""==a.__text||""==a.__text.trim())&&delete a.__text,delete a.__cnt,!t.enableToStringFunc||null==a.__text&&null==a.__cdata||(a.toString=function(){return(null!=this.__text?this.__text:"")+(null!=this.__cdata?this.__cdata:"")}),a}return e.nodeType==T.TEXT_NODE||e.nodeType==T.CDATA_SECTION_NODE?e.nodeValue:void 0}function f(e,n,r,i){var o="<"+(null!=e&&null!=e.__prefix?e.__prefix+":":"")+n;if(null!=r)for(var s=0;s<r.length;s++){var u=r[s],l=e[u];t.escapeMode&&(l=a(l)),o+=" "+u.substr(t.attributePrefix.length)+"='"+l+"'"}return o+=i?"/>":">"}function d(t,e){return"</"+(null!=t.__prefix?t.__prefix+":":"")+e+">"}function h(t,e){return-1!==t.indexOf(e,t.length-e.length)}function m(e,n){return!!("property"==t.arrayAccessForm&&h(n.toString(),"_asArray")||0==n.toString().indexOf(t.attributePrefix)||0==n.toString().indexOf("__")||e[n]instanceof Function)}function p(t){var e=0;if(t instanceof Object)for(var n in t)m(t,n)||e++;return e}function g(e){var n=[];if(e instanceof Object)for(var r in e)-1==r.toString().indexOf("__")&&0==r.toString().indexOf(t.attributePrefix)&&n.push(r);return n}function y(e){var n="";return null!=e.__cdata&&(n+="<![CDATA["+e.__cdata+"]]>"),null!=e.__text&&(n+=t.escapeMode?a(e.__text):e.__text),n}function v(e){var n="";return e instanceof Object?n+=y(e):null!=e&&(n+=t.escapeMode?a(e):e),n}function _(t,e,n){var r="";if(0==t.length)r+=f(t,e,n,!0);else for(var i=0;i<t.length;i++)r+=f(t[i],e,g(t[i]),!1),r+=x(t[i]),r+=d(t[i],e);return r}function x(t){var e="",n=p(t);if(n>0)for(var r in t)if(!m(t,r)){var i=t[r],a=g(i);if(null==i||void 0==i)e+=f(i,r,a,!0);else if(i instanceof Object)if(i instanceof Array)e+=_(i,r,a);else if(i instanceof Date)e+=f(i,r,a,!1),e+=i.toISOString(),e+=d(i,r);else{var o=p(i);o>0||null!=i.__text||null!=i.__cdata?(e+=f(i,r,a,!1),e+=x(i),e+=d(i,r)):e+=f(i,r,a,!0)}else e+=f(i,r,a,!1),e+=v(i),e+=d(i,r)}return e+=v(t)}var w="1.1.5";t=t||{},e(),n();var T={ELEMENT_NODE:1,TEXT_NODE:3,CDATA_SECTION_NODE:4,COMMENT_NODE:8,DOCUMENT_NODE:9};this.parseXmlString=function(t){var e=window.ActiveXObject||"ActiveXObject"in window;if(void 0===t)return null;var n;if(window.DOMParser){var r=new window.DOMParser,i=null;if(!e)try{i=r.parseFromString("INVALID","text/xml").childNodes[0].namespaceURI}catch(a){i=null}try{n=r.parseFromString(t,"text/xml"),null!=i&&n.getElementsByTagNameNS(i,"parsererror").length>0&&(n=null)}catch(a){n=null}}else 0==t.indexOf("<?")&&(t=t.substr(t.indexOf("?>")+2)),n=new ActiveXObject("Microsoft.XMLDOM"),n.async="false",n.loadXML(t);return n},this.asArray=function(t){return t instanceof Array?t:[t]},this.toXmlDateTime=function(t){return t instanceof Date?t.toISOString():"number"==typeof t?new Date(t).toISOString():null},this.asDateTime=function(t){return"string"==typeof t?u(t):t},this.xml2json=function(t){return c(t)},this.xml_str2json=function(t){var e=this.parseXmlString(t);return null!=e?this.xml2json(e):null},this.json2xml_str=function(t){return x(t)},this.json2xml=function(t){var e=this.json2xml_str(t);return this.parseXmlString(e)},this.getVersion=function(){return w}}function jasFactory(){function t(t,e,n){function r(t){console.error(t)}function i(){function t(t){n[t.keyCode]=!0}function e(t){delete n[t.keyCode]}h.addEventListener("mousedown",function(){p.mouseup&&delete p.mouseup,p.mousedown=!0},!1),h.addEventListener("mouseup",function(){p.mousedown&&delete p.mousedown,p.mouseup=!0,window.setTimeout(function(){delete p.mouseup},10)},!1);var n={},r={UP:38,RIGHT:39,DOWN:40,LEFT:37,SPACE:32,ENTER:13,A:65,S:83,D:68,W:87,CTRL:17,SHIFT:16,ALT:18};window.addEventListener("keydown",t,!1),window.addEventListener("keyup",e,!1);var i={isKeyDown:function(t){var e=n[r[t]];return!!e},areKeysDown:function(t){for(var e in t){var n=t[e];if(!this.isKeyDown(n))return!1}return!0},keysNotPressed:function(t){for(var e in t){var n=t[e];if(this.isKeyDown(n))return!1}return!0}};return i}function a(){function t(t){}function e(t,e){n[t]=n[t]?n[t]:[],n[t].push(e)}var n={},r={publish:t,subscribe:e};return r}var o=document.getElementById(t);h=document.createElement("canvas"),h.width=e?e:320,h.height=n?n:320,h.innerHTML="<h3>Your browser doesn't support HTML5 canvas!</h3>",h.innerHTML+="<p>Try one of these browsers...</p>",m=h.getContext("2d"),o.appendChild(h),0==Object.keys(x).length&&r("You must inject at least one game state using jas.addState\n");for(var s in x)x[s].init();p=i(),_=a()}function e(){g=Date.now(),n()}function n(){var t=Date.now()-g;w.update(t,p),w.render(O),b(n)}function r(){function t(t,e,n){var r={};return new Promise(function(n,i){var o=new XMLHttpRequest,s={};o.onreadystatechange=function(){2==o.readyState&&(a.maps[t]=!1)},o.onload=function(){if(200==o.status){var t=new X2JS;s=t.xml_str2json(o.responseText).map,r.tileX=Number(s._height),r.tileY=Number(s._width),r.tileW=Number(s._tilewidth),r.tileH=Number(s._tileheight),r.x=0,r.y=0,r.w=r.tileX*r.tileW,r.h=r.tileX*r.tileH,r.layers={};for(var e in s.layer){var i={};i.name=s.layer[e]._name,i.width=s.layer[e]._width,i.height=s.layer[e]._height,i.tiles=[];for(var a in s.layer[e].data.tile){var u={};u.tileId=Number(s.layer[e].data.tile[a]._gid),0!=u.tileId&&(u.tileId--,u.x=a*r.tileW%r.w,u.y=Math.floor(a*r.tileW/r.w)*r.tileH,i.tiles.push(u))}i.properties={};for(var l in s.layer[e].properties){var c=s.layer[e].properties[l];i.properties[c._name]=c._value}r.layers[i.name]=i}}n(r)},o.onerror=function(){console.error("error finding tmx file in newMap")},o.open("get",e,!0),o.send()}).then(function(){"function"==typeof n&&n(r)})}function e(t,e,n){var r=new Image;return new Promise(function(n,i){a.images[t]=!1,r.onload=function(){a.images[t]=r,n(r)},r.src=e}).then(function(){"function"==typeof n&&n(r)})}function n(t){return a.images[t]?a.images[t]:!1}function r(t,e){}function i(t){return a.audio[t]?a.audio[t]:!1}var a={images:{},audio:{},maps:{}};return{newImage:e,audio:r,getImage:n,getAudio:i,getMapData:t}}function i(){function t(t,e){var r=n[t]?n[t](e):{};return r}function e(t,e){n[t]=e}var n={entity:function(t){var e={};return e.x=t.x,e.y=t.y,e.w=t.w,e.h=t.h,e},solid:function(t){var e=!0,n=this.entity(t);return n.setSolid=function(t){try{if("boolean"!=typeof t)throw"entity set solid requires boolean";e=t}catch(n){console.error(n.message)}},n.isCollideable=function(){return e},n.isColliding=function(t,e,n){if(this.isCollideable&&t.isCollideable){var r=this.x+this.w>t.x,i=this.y+this.h>t.y,a=t.x+t.w>this.x,o=t.y+t.h>this.y;r&&i&&a&&o?"function"==typeof e?e():null:"function"==typeof n?n():null}},n},rect:function(t){var e=this.solid(t),n=t.color?t.color:null;t.alpha?t.alpha:null;return e.getDraw=function(){return{type:"rect",x:this.x,y:this.y,w:this.w,h:this.h,color:n}},e},component:function(t){var t=t?t:{};this.rect(t)},sprite:function(t){function e(t){function e(t,e,n,r){return{sx:t,sy:e,sw:n,sh:r}}t=t?t:{};var r={};r.name=t.name;for(var i=t.start,a=t.stop,o=n.w,u=n.h,l=t.looping?t.looping:!1,c=(t.pingpong?t.pingpong:!1,t.fps?t.fps:12),f=[],d=i;a>d;d++){var h=d*o%s,m=Math.floor(d*o/s)*u;f.push(e(h,m,o,u))}var p=0,g=Date.now(),y=!1;return r.update=function(){var t=Date.now();if((t-g)/1e3>=1/c&&!y){g=Date.now();var e=++p>=f.length;e&&l?p=0:e&&(p=f.length-1,y=!0)}},r.getCurrentFrame=function(){return f[p]},r.reset=function(){p=0,y=!1},t.def&&(n.anim=r),r}var n=this.solid(t),r={UP:-1,RIGHT:1,DOWN:1,LEFT:-1},i=r.DOWN,a=r.RIGHT,o=t?t.imageId:null,s=A.getImage(o).width;A.getImage(o).height;n.animations={};for(var u in t.animations){var l=t.animations[u];n.animations[l.name]=e(l)}return n.setAnim=function(t){n.anim=n.animations[t]},n.getAnimId=function(){return n.anim.name},n.addAnim=function(t,r){n.animations[t]=e(r),r.def&&(n.anim=n.animations[t])},n.updateAnim=function(){n.anim.update()},n.resetAnim=function(t){t?n.animation[t].reset():n.anim.reset()},n.getDraw=function(){var t=n.anim.getCurrentFrame();return{type:"sprite",frame:t,x:this.x,y:this.y,w:this.w,h:this.h,imageId:o}},n.moveUp=function(){i=r.UP,this.y-=this.spd},n.moveRight=function(){a=r.RIGHT,this.x+=this.spd},n.moveDown=function(){i=r.DOWN,this.y+=this.spd},n.moveLeft=function(){a=r.LEFT,this.x-=this.spd},n.collide=function(){switch(i){case r.UP:this.y+=this.spd,i=0;break;case r.DOWN:this.y-=this.spd,i=0}switch(a){case r.RIGHT:this.x-=this.spd,a=0;break;case r.LEFT:this.x+=this.spd,a=0}},n},tile:function(t){var t=t?t:{},e=this.sprite(t);return e.setAnim("tile"),e.tileId=t.tileId,e},map:function(t){t=t?t:{};var e=this.solid(t),r={};e.layers={};var i=t.tileW,a=t.tileH,o=t.imageId;return e.configureTile=function(t,e){r[t]=e},e.makeTiles=function(){for(var s in t.layers){var u={};u.tiles=[];for(var l in t.layers[s].tiles){var c=t.layers[s].tiles[l];r[c.tileId]?r[c.tileId]:function(t){return t};c.imageId=o,c.w=i,c.h=a,c.animations=[{name:"tile",start:c.tileId,stop:c.tileId+1,def:!0}];var f=n.tile(c);u.tiles.push(f)}e.layers[t.layers[s].name]=u}},e.getDraw=function(t){return e.layers[t]?{type:"mapLayer",tiles:e.layers[t].tiles}:!1},e}};return{inst:t,newClass:e}}function a(t,e){return e.id=y,v[t]=v[t]?v[t]:[],v[t].push(e),y++,e}function o(t){var e=t.group;for(var n in v[e])t.id==v[e][n].id&&v[e].splice(n,1)}function s(t){return v[t]?v[t][0]:!1}function u(t){return v[t]}function l(t){return v[t]?v[t][0]:!1}function c(){function t(t){var e=t.color?t.color:"#0f0";m.fillStyle=e;var n=t.x,r=t.y,i=t.w,a=t.h;m.fillRect(n,r,i,a)}function e(t){var e=A.getImage(t.imageId),n=t.frame,r=n.sx,i=n.sy,a=n.sw,o=n.sh,s=t.x,u=t.y,l=t.w,c=t.h;e&&m.drawImage(e,r,i,a,o,s,u,l,c)}var n={renderMapLayer:function(t,n){var r=l(t);if(r){var i=r.getDraw(n);if(i)for(var a in i.tiles)e(i.tiles[a].getDraw())}},renderGroup:function(n){var r=u(n);for(var i in r){var a=r[i],o=a.getDraw();switch(o.type){case"rect":t(o);break;case"sprite":e(o)}}},fillScreen:function(t,e){m.fillStyle=t?t:"#f0f",m.globalAlpha=e?e:1,m.fillRect(0,0,h.width,h.height)}};return n}function f(t,e,n,r){var i=e,a={stateName:t,init:i,update:n,render:r};x[t]=a,void 0==w&&(w=a)}function d(t){w=x[t]}var h,m,p,g,y=0,v={},_={},x={},w=null,T=window,b=T.requestAnimationFrame||T.mozRequestAnimationFrame||T.msRequestAnimationFrame||T.webkitRequestAnimationFrame||T.oRequestAnimationFrame,A=r(),D=i(),O=c(),E={init:t,begin:e,Entity:D,Asset:A,addEntity:a,removeEntity:o,addState:f,changeState:d,getGroup:u,getMap:l,getFirst:s};return E}var jas=jasFactory();
+function X2JS(v){var q="1.1.5";v=v||{};h();r();function h(){if(v.escapeMode===undefined){v.escapeMode=true;}v.attributePrefix=v.attributePrefix||"_";v.arrayAccessForm=v.arrayAccessForm||"none";v.emptyNodeForm=v.emptyNodeForm||"text";if(v.enableToStringFunc===undefined){v.enableToStringFunc=true;}v.arrayAccessFormPaths=v.arrayAccessFormPaths||[];if(v.skipEmptyTextNodesForObj===undefined){v.skipEmptyTextNodesForObj=true;}if(v.stripWhitespaces===undefined){v.stripWhitespaces=true;}v.datetimeAccessFormPaths=v.datetimeAccessFormPaths||[];}var g={ELEMENT_NODE:1,TEXT_NODE:3,CDATA_SECTION_NODE:4,COMMENT_NODE:8,DOCUMENT_NODE:9};function r(){function x(z){var y=String(z);if(y.length===1){y="0"+y;}return y;}if(typeof String.prototype.trim!=="function"){String.prototype.trim=function(){return this.replace(/^\s+|^\n+|(\s|\n)+$/g,"");};}if(typeof Date.prototype.toISOString!=="function"){Date.prototype.toISOString=function(){return this.getUTCFullYear()+"-"+x(this.getUTCMonth()+1)+"-"+x(this.getUTCDate())+"T"+x(this.getUTCHours())+":"+x(this.getUTCMinutes())+":"+x(this.getUTCSeconds())+"."+String((this.getUTCMilliseconds()/1000).toFixed(3)).slice(2,5)+"Z";};}}function t(x){var y=x.localName;if(y==null){y=x.baseName;}if(y==null||y==""){y=x.nodeName;}return y;}function o(x){return x.prefix;}function p(x){if(typeof(x)=="string"){return x.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#x27;").replace(/\//g,"&#x2F;");}else{return x;}}function j(x){return x.replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#x27;/g,"'").replace(/&#x2F;/g,"/");}function l(B,y,A){switch(v.arrayAccessForm){case"property":if(!(B[y] instanceof Array)){B[y+"_asArray"]=[B[y]];}else{B[y+"_asArray"]=B[y];}break;}if(!(B[y] instanceof Array)&&v.arrayAccessFormPaths.length>0){var x=0;for(;x<v.arrayAccessFormPaths.length;x++){var z=v.arrayAccessFormPaths[x];if(typeof z==="string"){if(z==A){break;}}else{if(z instanceof RegExp){if(z.test(A)){break;}}else{if(typeof z==="function"){if(z(B,y,A)){break;}}}}}if(x!=v.arrayAccessFormPaths.length){B[y]=[B[y]];}}}function a(C){var A=C.split(/[-T:+Z]/g);var B=new Date(A[0],A[1]-1,A[2]);var z=A[5].split(".");B.setHours(A[3],A[4],z[0]);if(z.length>1){B.setMilliseconds(z[1]);}if(A[6]&&A[7]){var y=A[6]*60+Number(A[7]);var x=/\d\d-\d\d:\d\d$/.test(C)?"-":"+";y=0+(x=="-"?-1*y:y);B.setMinutes(B.getMinutes()-y-B.getTimezoneOffset());}else{if(C.indexOf("Z",C.length-1)!==-1){B=new Date(Date.UTC(B.getFullYear(),B.getMonth(),B.getDate(),B.getHours(),B.getMinutes(),B.getSeconds(),B.getMilliseconds()));}}return B;}function n(A,y,z){if(v.datetimeAccessFormPaths.length>0){var B=z.split(".#")[0];var x=0;for(;x<v.datetimeAccessFormPaths.length;x++){var C=v.datetimeAccessFormPaths[x];if(typeof C==="string"){if(C==B){break;}}else{if(C instanceof RegExp){if(C.test(B)){break;}}else{if(typeof C==="function"){if(C(obj,y,B)){break;}}}}}if(x!=v.datetimeAccessFormPaths.length){return a(A);}else{return A;}}else{return A;}}function w(z,E){if(z.nodeType==g.DOCUMENT_NODE){var F=new Object;var x=z.childNodes;for(var G=0;G<x.length;G++){var y=x.item(G);if(y.nodeType==g.ELEMENT_NODE){var D=t(y);F[D]=w(y,D);}}return F;}else{if(z.nodeType==g.ELEMENT_NODE){var F=new Object;F.__cnt=0;var x=z.childNodes;for(var G=0;G<x.length;G++){var y=x.item(G);var D=t(y);if(y.nodeType!=g.COMMENT_NODE){F.__cnt++;if(F[D]==null){F[D]=w(y,E+"."+D);l(F,D,E+"."+D);}else{if(F[D]!=null){if(!(F[D] instanceof Array)){F[D]=[F[D]];l(F,D,E+"."+D);}}(F[D])[F[D].length]=w(y,E+"."+D);}}}for(var A=0;A<z.attributes.length;A++){var B=z.attributes.item(A);F.__cnt++;F[v.attributePrefix+B.name]=B.value;}var C=o(z);if(C!=null&&C!=""){F.__cnt++;F.__prefix=C;}if(F["#text"]!=null){F.__text=F["#text"];if(F.__text instanceof Array){F.__text=F.__text.join("\n");}if(v.escapeMode){F.__text=j(F.__text);}if(v.stripWhitespaces){F.__text=F.__text.trim();}delete F["#text"];if(v.arrayAccessForm=="property"){delete F["#text_asArray"];}F.__text=n(F.__text,D,E+"."+D);}if(F["#cdata-section"]!=null){F.__cdata=F["#cdata-section"];delete F["#cdata-section"];if(v.arrayAccessForm=="property"){delete F["#cdata-section_asArray"];}}if(F.__cnt==1&&F.__text!=null){F=F.__text;}else{if(F.__cnt==0&&v.emptyNodeForm=="text"){F="";}else{if(F.__cnt>1&&F.__text!=null&&v.skipEmptyTextNodesForObj){if((v.stripWhitespaces&&F.__text=="")||(F.__text.trim()=="")){delete F.__text;}}}}delete F.__cnt;if(v.enableToStringFunc&&(F.__text!=null||F.__cdata!=null)){F.toString=function(){return(this.__text!=null?this.__text:"")+(this.__cdata!=null?this.__cdata:"");};}return F;}else{if(z.nodeType==g.TEXT_NODE||z.nodeType==g.CDATA_SECTION_NODE){return z.nodeValue;}}}}function m(E,B,D,y){var A="<"+((E!=null&&E.__prefix!=null)?(E.__prefix+":"):"")+B;if(D!=null){for(var C=0;C<D.length;C++){var z=D[C];var x=E[z];if(v.escapeMode){x=p(x);}A+=" "+z.substr(v.attributePrefix.length)+"='"+x+"'";}}if(!y){A+=">";}else{A+="/>";}return A;}function i(y,x){return"</"+(y.__prefix!=null?(y.__prefix+":"):"")+x+">";}function s(y,x){return y.indexOf(x,y.length-x.length)!==-1;}function u(y,x){if((v.arrayAccessForm=="property"&&s(x.toString(),("_asArray")))||x.toString().indexOf(v.attributePrefix)==0||x.toString().indexOf("__")==0||(y[x] instanceof Function)){return true;}else{return false;}}function k(z){var y=0;if(z instanceof Object){for(var x in z){if(u(z,x)){continue;}y++;}}return y;}function b(z){var y=[];if(z instanceof Object){for(var x in z){if(x.toString().indexOf("__")==-1&&x.toString().indexOf(v.attributePrefix)==0){y.push(x);}}}return y;}function f(y){var x="";if(y.__cdata!=null){x+="<![CDATA["+y.__cdata+"]]>";}if(y.__text!=null){if(v.escapeMode){x+=p(y.__text);}else{x+=y.__text;}}return x;}function c(y){var x="";if(y instanceof Object){x+=f(y);}else{if(y!=null){if(v.escapeMode){x+=p(y);}else{x+=y;}}}return x;}function e(z,B,A){var x="";if(z.length==0){x+=m(z,B,A,true);}else{for(var y=0;y<z.length;y++){x+=m(z[y],B,b(z[y]),false);x+=d(z[y]);x+=i(z[y],B);}}return x;}function d(D){var x="";var B=k(D);if(B>0){for(var A in D){if(u(D,A)){continue;}var z=D[A];var C=b(z);if(z==null||z==undefined){x+=m(z,A,C,true);}else{if(z instanceof Object){if(z instanceof Array){x+=e(z,A,C);}else{if(z instanceof Date){x+=m(z,A,C,false);x+=z.toISOString();x+=i(z,A);}else{var y=k(z);if(y>0||z.__text!=null||z.__cdata!=null){x+=m(z,A,C,false);x+=d(z);x+=i(z,A);}else{x+=m(z,A,C,true);}}}}else{x+=m(z,A,C,false);x+=c(z);x+=i(z,A);}}}}x+=c(D);return x;}this.parseXmlString=function(z){var B=window.ActiveXObject||"ActiveXObject" in window;if(z===undefined){return null;}var A;if(window.DOMParser){var C=new window.DOMParser();var x=null;if(!B){try{x=C.parseFromString("INVALID","text/xml").childNodes[0].namespaceURI;}catch(y){x=null;}}try{A=C.parseFromString(z,"text/xml");if(x!=null&&A.getElementsByTagNameNS(x,"parsererror").length>0){A=null;}}catch(y){A=null;}}else{if(z.indexOf("<?")==0){z=z.substr(z.indexOf("?>")+2);}A=new ActiveXObject("Microsoft.XMLDOM");A.async="false";A.loadXML(z);}return A;};this.asArray=function(x){if(x instanceof Array){return x;}else{return[x];}};this.toXmlDateTime=function(x){if(x instanceof Date){return x.toISOString();}else{if(typeof(x)==="number"){return new Date(x).toISOString();}else{return null;}}};this.asDateTime=function(x){if(typeof(x)=="string"){return a(x);}else{return x;}};this.xml2json=function(x){return w(x);};this.xml_str2json=function(x){var y=this.parseXmlString(x);if(y!=null){return this.xml2json(y);}else{return null;}};this.json2xml_str=function(x){return d(x);};this.json2xml=function(y){var x=this.json2xml_str(y);return this.parseXmlString(x);};this.getVersion=function(){return q;};}
+var jas = {};
+(function (jas) {
+  var publications = {};
+
+  function publication () {
+    var subscribers = {};
+    function subscriber (callback) {
+      return {
+        callback: callback,
+      } 
+    }
+    
+    return {
+      publish: function (event) {
+        for (var i in subscribers) {
+          subscribers[i].callback(event);
+        }
+      },
+      addSubscriber: function (subId, callback) {
+        subscribers[subId] = subscriber(callback);
+      },
+      removeSubscriber: function (subId) {
+        delete subscribers[subId];
+      }
+    }
+  }
+  
+  jas.Event = {
+    addPublication: function (name) {
+      publications[name] = publication();
+    },
+    remPublication: function (name) { // careful! destroys subscribers too
+      delete publications[name];
+    },
+    subscribe: function (pubId, subId, callback) {
+      publications[pubId].addSubscriber(subId, callback);
+      console.log(publications);
+    },
+    unsubscribe: function (pubId, subId) {
+      publications[pubId].removeSubscriber(subId);
+    },
+    publish: function (pubId, event) {
+      publications[pubId].publish(event);
+    }
+  };
+  
+})(jas);
+// global namespace jas
+(function (jas) {
+  
+  var assets = {
+    images: {},
+    audio: {},
+    maps: {}
+  };
+  
+  function getMapData(name, path, userCallback) {
+    var map = {}; 
+    
+    return new Promise(function(success, error) {
+      var request = new XMLHttpRequest();
+      var data = {};
+      
+      request.onreadystatechange = function () {
+        if (request.readyState == 2) {
+          assets.maps[name] = false;
+        }
+      }
+      
+      request.onload = function () {
+        if (request.status == 200) {
+          
+          /* global X2JS */
+          var x2js = new X2JS();
+          
+          data = x2js.xml_str2json(request.responseText).map;
+          map.tileX = Number(data._height);
+          map.tileY = Number(data._width);
+          map.tileW = Number(data._tilewidth);
+          map.tileH = Number(data._tileheight);
+          map.x = 0;
+          map.y = 0;
+          map.w = map.tileX * map.tileW;
+          map.h = map.tileX * map.tileH;
+          
+          // get layer data
+          map.layers = {};
+          for (var i in data.layer) {
+            var layer = {};
+            layer.name = data.layer[i]._name;
+            layer.width = data.layer[i]._width;
+            layer.height = data.layer[i]._height;
+            layer.tiles = [];
+            
+            // get tiles
+            for (var j in data.layer[i].data.tile) {
+              var tile = {};
+              tile.tileId = Number(data.layer[i].data.tile[j]._gid);
+              if (tile.tileId == 0) {
+                continue; // don't include 'null' tiles
+              }
+              else {
+                tile.tileId--; // start at 0
+                tile.x = (j * map.tileW) % map.w;
+                tile.y = Math.floor((j * map.tileW) / map.w) * map.tileH;
+                layer.tiles.push(tile);
+              }
+            }
+            // end layer tiles
+            
+            // get layer properties
+            layer.properties = {};
+            for (var k in data.layer[i].properties) {
+              var property = data.layer[i].properties[k];
+              layer.properties[property._name] = property._value;
+            }
+            map.layers[layer.name] = layer;
+          
+          }
+          // end iteration of layers
+        }
+        
+        success(map);
+      };
+      
+      request.onerror = function () {
+        console.error("error finding tmx file in newMap");
+      };
+      
+      request.open("get", path, true);
+      
+      request.send();
+      
+    }).then(function () {
+      
+      if (typeof(userCallback) == "function") {
+        userCallback(map);
+      }
+      assets.maps[name] = map;
+    });
+      
+  }
+
+  function newImage(name, path, userCallback) {
+    var image = new Image();
+    
+    return new Promise(function (success, failure) {
+      assets.images[name] = false;
+      /*global Image*/
+    
+      image.onload = function () {
+        assets.images[name] = image;
+        success(image);
+        if (typeof(userCallback) == "function") {
+          userCallback(image);
+        }
+      };
+    
+      image.src = path;
+      
+    });
+  
+  }
+  
+  function getImage (name) {
+    return assets.images[name] || false;
+  }
+  
+  function imageReady (name) {
+    return assets.images[name]? true: false;
+  }
+
+  function newAudio(name, path) {
+      
+  }
+  
+  function getAudio (name) {
+    return assets.audio[name] || false;
+  }
+  
+  function audioReady (name) {
+    return assets.audio[name]? true: false;
+  }
+  
+  function getMap (name) {
+    return assets.maps[name] || false;
+  }
+
+  function mapReady (name) {
+   return assets.maps[name]? true: false;
+  }
+  
+  function assetsReady () {
+    for (var i in assets) {
+      var type = assets[i];
+      for (var j in type) {
+        var asset = type[j];
+        if (!j) {
+          return false; 
+        }
+      }
+    }
+    return true;
+  }
+
+  jas.Asset = {
+    newImage: newImage,
+    audio: newAudio,
+    getImage: getImage,
+    getAudio: getAudio,
+    getMapData: getMapData,
+    assetsReady: assetsReady
+  };
+
+})(jas);
+(function(jas) {
+  // ENTITY FACTORY
+  /*global name-space jas*/
+  var entities = {};
+  var groups = {};
+  
+  var entityAutoId = 0;
+  
+  var classes = {
+    entity: function (mutator) {
+      var instance = {};
+      instance.x = mutator.x;
+      instance.y = mutator.y;
+      instance.w = mutator.w;
+      instance.h = mutator.h;
+      
+      return instance;
+    },
+    
+    solid : function (mutator) {
+      var collideable = true;
+      
+      var instance = this.entity(mutator);
+      
+      instance.setSolid = function (isCollideable) {
+        try {
+          if (typeof (isCollideable) === "boolean") {
+            collideable = isCollideable;
+          } 
+          else {
+            throw "entity set solid requires boolean";
+          }
+        }
+        catch (e) {
+          console.error(e.message);
+        }
+      }
+      
+      instance.isCollideable = function () {
+        return collideable;
+      }
+      
+      
+      instance.isColliding = function (collider, success, failure) {
+        if (this.isCollideable && collider.isCollideable) {
+          // collision vectors
+          var v1 = this.x + this.w > collider.x;
+          var v2 = this.y + this.h > collider.y;
+          var v3 = collider.x + collider.w > this.x;
+          var v4 = collider.y + collider.h > this.y;
+          if (v1 && v2 && v3 && v4) {
+            typeof(success)=="function"? success(): null;
+          }
+          else {
+            typeof(failure)=="function"? failure(): null;
+            
+          }
+        }
+      }
+      
+      return instance;
+    },
+    
+    rect: function (mutator) {
+      var instance = this.solid(mutator);
+      var color = mutator.color? mutator.color: null;
+      var alpha = mutator.alpha? mutator.alpha: null;
+      
+      instance.getDraw = function () {
+        return {
+          type: "rect",
+          x: this.x,
+          y: this.y,
+          w: this.w,
+          h: this.h,
+          color: color
+        };
+      }
+      
+      return instance;
+    },
+    component: function (mutator) {
+      var mutator = mutator? mutator: {};
+      var instance = this.rect(mutator);
+      var parent;
+      function widget () {
+        var components = {};
+        instance.addComponent = function (component) {
+          
+        };
+        
+        instance.removeComponent = function () {
+          
+        };
+        
+        
+        
+      }
+      
+    },
+    sprite : function (mutator) {
+      var instance = this.solid(mutator);
+      
+      function animationFactory(animMutator) {
+        
+        function frame (sx, sy, sw, sh) {
+          
+          return {
+            sx: sx,
+            sy: sy,
+            sw: sw,
+            sh: sh
+          };
+        }
+        
+        animMutator = animMutator? animMutator: {};
+        var animation = {};
+        
+        animation.name = animMutator.name;
+        
+        var start = animMutator.start;
+        var stop = animMutator.stop;
+        var w = instance.w;// sub image w & h
+        var h = instance.h;
+        
+        var looping = animMutator.looping? animMutator.looping: false;
+        var pingpong = animMutator.pingpong? animMutator.pingpong: false;
+        var fps = animMutator.fps? animMutator.fps: 12;
+        
+        var frames = [];
+        
+        
+        for ( var i = start; i < stop; i++) {
+          var x = (i * w) % imageW;
+          var y = Math.floor((i * w) / imageW) * h;
+          frames.push(frame(x, y, w, h));
+        }
+        
+        //console.log(stop);
+        
+        var currentFrame = 0;
+        var lastUpdate = Date.now();
+        var done = false;
+        
+        animation.update = function () {
+          var now = Date.now();
+          
+          if ((now - lastUpdate)/1000 >= 1/fps && !done) {
+            lastUpdate = Date.now();
+            var lastFrame = ++currentFrame >= frames.length;
+            if (lastFrame && looping) {
+              currentFrame = 0;
+            }
+            else if (lastFrame) {
+              currentFrame = frames.length - 1;
+              done = true
+            }
+          }
+        };
+        
+        animation.getCurrentFrame = function () {
+          return frames[currentFrame];
+        }
+        
+        animation.reset = function() {
+          currentFrame = 0;
+          done = false;
+        }
+        
+        if (animMutator.def) {
+          instance.anim = animation;
+        }
+        
+        return animation;
+      }
+      
+      
+      var Directions = {
+        UP: -1,
+        RIGHT: 1,
+        DOWN: 1,
+        LEFT: -1
+      };
+      
+      var dirY = Directions.DOWN;
+      var dirX = Directions.RIGHT;
+      
+      var imageId = mutator? mutator.imageId: null;
+      var imageW = jas.Asset.getImage(imageId).width;
+      var imageH = jas.Asset.getImage(imageId).height;
+      
+      instance.animations = {};
+      
+      for (var i in mutator.animations) {
+        var animData = mutator.animations[i];
+        instance.animations[animData.name] = animationFactory(animData);
+      }
+      
+      instance.setAnim = function (animId) {
+        instance.anim = instance.animations[animId];
+      }
+      
+      instance.getAnimId = function () {
+        return instance.anim.name;
+      };
+      
+      instance.addAnim = function (animId, animMutator) {
+        instance.animations[animId] = animationFactory(animMutator);
+        if (animMutator.def) {
+          instance.anim = instance.animations[animId];
+        }
+      }
+      
+      instance.updateAnim = function () {
+        instance.anim.update();
+      }
+      
+      instance.resetAnim = function (animId) {
+        if (animId) {
+          instance.animation[animId].reset();
+        }
+        else {
+          instance.anim.reset();
+        }
+      }
+      
+      // draw functions
+      instance.getDraw = function () {
+        
+        var frame = instance.anim.getCurrentFrame();
+        
+        return {
+          type: "sprite",
+          frame: frame,
+          x: this.x,
+          y: this.y,
+          w: this.w,
+          h: this.h,
+          imageId: imageId
+        };
+      }
+      // locomotive methods
+      instance.moveUp = function () {
+        dirY = Directions.UP;
+        this.y -= this.spd;
+      };
+      
+      instance.moveRight = function () {
+        dirX = Directions.RIGHT;
+        this.x += this.spd;
+      };
+      
+      instance.moveDown = function () {
+        dirY = Directions.DOWN;
+        this.y += this.spd;
+        
+      };
+      
+      instance.moveLeft = function () {
+        dirX = Directions.LEFT;
+        this.x -= this.spd;
+      };
+      
+      instance.collide = function () {
+        switch (dirY) {
+          case Directions.UP:
+            this.y += this.spd;
+            dirY = 0;
+            break;
+          case Directions.DOWN:
+            this.y -= this.spd;
+            dirY = 0;
+            break;
+        }
+        switch (dirX) {
+          case Directions.RIGHT:
+            this.x -= this.spd;
+            dirX = 0;
+            break;
+          case Directions.LEFT:
+            this.x += this.spd;
+            dirX = 0;
+            break;
+          
+        }
+      };
+      // end locomotive methods
+      
+      return instance;
+    },
+    
+    tile: function (mutator) {
+      var mutator = mutator? mutator: {};
+      
+      var instance = this.sprite(mutator);
+      instance.setAnim("tile");
+      
+      instance.tileId = mutator.tileId;
+      
+      return instance;
+    },
+    
+    map: function (mutator) {
+      // everything in this mutator is sanitized of underscores.
+      // this is the parsed map data.
+      mutator = mutator? mutator : {};
+      var instance = this.solid(mutator);
+      
+      var tileMutators = {};
+      instance.layers = {};
+      
+      var tileW = mutator.tileW,
+          tileH = mutator.tileH,
+          imageId = mutator.imageId;
+      
+      instance.configureTile = function (tileId, mutatorFunction) {
+        tileMutators[tileId] = mutatorFunction;
+      }
+      
+      instance.makeTiles = function () {
+        for (var i in mutator.layers) {
+          var layer = {};
+          layer.tiles = [];
+          
+          for (var j in mutator.layers[i].tiles) {
+            var tileData = mutator.layers[i].tiles[j];
+            var tileMutator = tileMutators[tileData.tileId] ?
+              tileMutators[tileData.tileId]: function (obj) {return obj;};
+            //console.log(tileData);
+            tileData.imageId = imageId;
+            tileData.w = tileW;
+            tileData.h = tileH;
+            tileData.animations = [{
+              "name": "tile",
+              "start": tileData.tileId,
+              "stop": tileData.tileId + 1,
+              def: true
+              }
+            ];
+            
+            // remove first four arguments...
+            var tile = classes.tile(tileData);
+            layer.tiles.push(tile);
+          }
+          instance.layers[mutator.layers[i].name] = layer;
+          
+        }
+        
+      };
+      
+      
+      instance.getDraw = function (layer) {
+        if (instance.layers[layer]) {
+          return {
+            type: "mapLayer",
+            tiles: instance.layers[layer].tiles
+          };
+        }
+        else {
+          return false;
+        }
+      };
+      
+      return instance;
+    }
+  }
+  
+  var enumEntities = {};
+  
+  // add enumerate entity
+  function enumerateEntity (name, num) {
+    enumEntities[num] = name;
+  }
+  
+  // ENTITY FACTORY PUBLIC INTERFACE
+  function inst (type, mutator) {
+    var newInstance = classes[type]? classes[type](mutator):{};
+    return newInstance;
+  }
+  
+  function newClass(type, factory) {
+    classes[type] = factory;
+  }
+  
+  function addEntity (group, entity) {
+    entity.id = entityAutoId;
+    entities[group] = entities[group] ? entities[group]: [];
+    entities[group].push(entity);
+    entityAutoId ++;
+    
+    return entity;
+  }
+  
+  
+  function removeEntity (entity) {
+    var group = entity.group;
+    for (var i in entities[group]) {
+      if (entity.id == entities[group][i].id) {
+        entities[group].splice(i, 1);
+      }
+    }
+  }
+  
+  function getFirst(groupId) {
+    return entities[groupId] ? entities[groupId][0]: false;
+  }
+  
+  function getGroup (groupId) {
+    return entities[groupId];
+  }
+  
+  function getMap (mapId) {
+    return entities[mapId] ? entities[mapId][0]: false;
+  }
+  
+  jas.Entity = {
+    inst: inst,
+    newClass: newClass,
+    addEntity: addEntity,
+    removeEntity: removeEntity,
+    enumerateEntity: enumerateEntity,
+    getFirst: getFirst,
+    getGroup: getGroup,
+    getMap: getMap
+  };
+  
+})(jas);
+(function (jas) {
+  // controller factory must attach event handlers to DOM canvas
+  function controllerFactory(canvas) {
+    controller = {};
+    
+    canvas.addEventListener('mousedown', function () {
+      if (controller.mouseup) {
+        delete controller.mouseup;
+      }
+      controller.mousedown = true;
+    }, false);
+    
+    canvas.addEventListener('mouseup', function () {
+      if (controller.mousedown) {
+        delete controller.mousedown;
+      }
+      controller.mouseup = true;
+      
+      window.setTimeout(function () {
+        delete controller.mouseup;
+      }, 10);
+    }, false);
+    
+    var keys = {};
+    
+    var keyCodes = {
+        UP: 38,
+        RIGHT:39,
+        DOWN:40,
+        LEFT:37,
+        SPACE: 32,
+        ENTER: 13,
+        A: 65,
+        S: 83,
+        D: 68,
+        W: 87,
+        CTRL: 17,
+        SHIFT: 16,
+        ALT: 18
+    };
+    
+    function addKey (e) {
+      keys[e.keyCode] = true;
+    }
+  
+    function removeKey(e) {
+      delete keys[e.keyCode];
+    }
+    
+    
+    window.addEventListener('keydown', addKey, false);
+    
+    window.addEventListener('keyup', removeKey, false);
+    
+    // init game controller
+    var controller = {
+      isKeyDown: function (key) {
+        var isIt = keys[keyCodes[key]];
+        return  isIt ? true: false;
+      },
+      areKeysDown: function (keyArr) {
+        for (var i in keyArr) {
+          var key = keyArr[i];
+          if (!this.isKeyDown(key)) {
+            return false;
+          }
+        }
+        return true;
+      },
+      keysNotPressed: function (keyArr) {
+        for (var i in keyArr) {
+          var key = keyArr[i];
+          if (this.isKeyDown(key)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    };
+    
+    return controller;
+  }
+  
+  jas.controllerFactory = controllerFactory;
+})(jas);
+(function (jas) {
+  function graphicsFactory (canvas, ctx) {
+    function drawRect (draw) {
+      var color = draw.color? draw.color: "#0f0";
+      
+      ctx.fillStyle = color;
+      
+      var x = draw.x,
+          y = draw.y,
+          w = draw.w,
+          h = draw.h;
+      
+      ctx.fillRect(x, y, w, h);
+    }
+    
+    function drawSprite (draw) {
+      var image = jas.Asset.getImage(draw.imageId);
+      //console.log(draw);
+      var frame = draw.frame,
+          sx = frame.sx,
+          sy = frame.sy,
+          sw = frame.sw,
+          sh = frame.sh,
+          dx = draw.x,
+          dy = draw.y,
+          dw = draw.w,
+          dh = draw.h;
+  
+      if (image) {
+        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+      }
+    }
+    
+    function renderMapLayer (mapId, layer) {
+      var map = jas.Entity.getMap(mapId);
+      if (!map) {
+        return;
+      }
+      else {
+        //console.log(map);
+        // get the map's render instructions
+        var draw = map.getDraw(layer);
+        if (!draw) {
+          return;
+        }
+        // get each tiles render instructions. Draw those tiles
+        for (var i in draw.tiles) {
+          
+          drawSprite(draw.tiles[i].getDraw());
+        }
+      }
+    }
+    
+    function renderGroup (groupId) {
+      var group = jas.Entity.getGroup(groupId);
+      
+      for (var i in group) {
+        var instance = group[i];
+        var draw = instance.getDraw();
+        
+        //console.log(draw.type);
+        switch (draw.type) {
+          case "rect":
+              drawRect(draw);
+            break;
+          case "sprite":
+              drawSprite(draw);
+            break;
+        }
+      }
+    }
+    
+    function fillScreen (color, alpha) {
+      ctx.fillStyle = color ? color: "#f0f";
+      ctx.globalAlpha = alpha ? alpha: 1;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    
+    return {
+      renderMapLayer: renderMapLayer ,
+      renderGroup: renderGroup,
+      fillScreen: fillScreen 
+    }
+  };
+  
+  jas.graphicsFactory = graphicsFactory;
+  
+})(jas);
+(function (jas) {
+  var stateAutoId = 0;
+  
+  // Gamestates
+  var states = {};
+  var state = null;
+  
+  // frame
+  var canvas, ctx, controller, graphics;
+
+  
+  // animation
+  var then;
+  var wn = window;
+  var requestAnimationFrame = wn.requestAnimationFrame || wn.mozRequestAnimationFrame ||
+   wn.msRequestAnimationFrame || wn.webkitRequestAnimationFrame || wn.oRequestAnimationFrame;
+   
+   
+  // STARTER FLUID METHODS
+  // init method accepts id attribute of DOM game frame.
+  function init (frameId, w, h) {
+    function initError (err) {
+      console.error(err);
+    }
+    // init game frame
+    var gameFrame = document.getElementById(frameId);
+    canvas = document.createElement("canvas");
+    
+    // no width? set to 320
+    canvas.width = w ? w: 320;
+    canvas.height = h ? h: 320;
+    
+    //if canvas won't work
+    canvas.innerHTML = "<h3>Your browser doesn't support HTML5 canvas!</h3>";
+    canvas.innerHTML += "<p>Try one of these browsers...</p>";
+    
+    ctx = canvas.getContext("2d");
+    
+    controller = jas.controllerFactory(canvas);
+    graphics = jas.graphicsFactory(canvas, ctx);
+    
+    gameFrame.appendChild(canvas);
+    // init game states
+    if (Object.keys(states).length == 0) {
+      initError("You must inject at least one game state using jas.addState\n");  
+    }
+
+    for (var i in states) {
+      states[i].init();
+    }
+
+  }
+  
+  function begin() {
+    then = Date.now();
+    main();
+  }
+  
+  function main() {
+    var now = Date.now() - then;
+    state.update(now, controller);
+    state.render(graphics);
+    requestAnimationFrame(main);
+  }
+  
+  
+  // GAME STATES PUBLIC API
+  function addState (stateName, init, update, render) {
+    
+    var stateInit = init;
+    
+    var newState = {
+      stateName: stateName,
+      init: stateInit,
+      update: update,
+      render: render
+    };
+    
+    states[stateName] = newState;
+    
+    if (state == undefined) {
+      state = newState;
+    }
+  } 
+  
+  function changeState(stateId) {
+    state = states[stateId];
+  }
+  
+  jas.init = init;
+  jas.begin = begin;
+  jas.addState = addState;
+  jas.changeState = changeState;
+    
+})(jas);

@@ -36,33 +36,6 @@ jas.addState("main",
       jas.Asset.newImage("tiles", "js/test/res/images/tileSet.png").then(function(){
         mapData.imageId = "tiles";
         var map = jas.Entity.addEntity("map", jas.Entity.inst("map", mapData));
-        jas.Entity.newClass("trap", function(mutator) {
-          mutator = mutator || {};
-          var instance = this.tile(mutator);
-          var dmg = mutator.dmg || 0;
-          var type = mutator.type || "fake";
-          instance.activate = function () {
-            jas.Event.publish("onActiveTile", {dmg: dmg, type: type});
-          }
-          return instance;
-        });
-        jas.Entity.newClass("fireTrap", function(mutator) {
-          mutator = mutator || {};
-          mutator.dmg = 15;
-          mutator.type = "fire";
-          var instance = this.trap(mutator);
-          return instance;
-        });
-        jas.Entity.newClass("stairsDown", function(mutator) {
-          mutator = mutator || {};
-          var instance = this.tile(mutator);
-          instance.activate = function () {
-            console.log("woops!");
-          }
-          return instance;
-        });
-        jas.Entity.enumerateClass("fireTrap", 19);
-        jas.Entity.enumerateClass("stairsDown", 71);
         map.makeTiles();
       });
     });
@@ -83,6 +56,7 @@ jas.addState("main",
         map = jas.Entity.getMap("map");
         
     var walls, activeTiles;
+    
     
     if (map) {
       walls = map.layers.walls.tiles;
