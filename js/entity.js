@@ -382,10 +382,13 @@
     classes[type] = factory;
   }
   
-  function addEntity (group, entity) {
+  function addEntity (entity, group) {
     entity.id = entityAutoId;
-    entities[group] = entities[group] ? entities[group]: [];
-    entities[group].push(entity);
+    if (group) {
+      groups[group] = groups[group] || {};
+      groups[group][entityAutoId] = entityAutoId;
+    }
+    entities[entityAutoId] = entity;
     entityAutoId ++;
     
     return entity;
@@ -393,24 +396,33 @@
   
   
   function removeEntity (entity) {
-    var group = entity.group;
-    for (var i in entities[group]) {
-      if (entity.id == entities[group][i].id) {
-        entities[group].splice(i, 1);
-      }
+    for (var i in groups) {
+      delete groups[i][entity.id]; 
     }
+    delete entities[entity.id];
   }
   
   function getFirst(groupId) {
-    return entities[groupId] ? entities[groupId][0]: false;
+    if (groups[groupId]) {
+      return entities[Object.keys(groups[groupId]).sort()[0]];
+    }
+    else {
+      return false;
+    }
   }
   
   function getGroup (groupId) {
-    return entities[groupId];
+    var group = [];
+    //console.log(groups);
+    for (var i in groups[groupId]) {
+      var id = groups[groupId][i];
+      group.push(entities[id]);
+    }
+    return group;
   }
   
   function getMap (mapId) {
-    return entities[mapId] ? entities[mapId][0]: false;
+    return getGroup(mapId)[0];
   }
   
   jas.Entity = {
