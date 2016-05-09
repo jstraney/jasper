@@ -35,7 +35,6 @@ var jas = {};
     },
     subscribe: function (pubId, subId, callback) {
       publications[pubId].addSubscriber(subId, callback);
-      console.log(publications);
     },
     unsubscribe: function (pubId, subId) {
       publications[pubId].removeSubscriber(subId);
@@ -598,10 +597,13 @@ var jas = {};
     classes[type] = factory;
   }
   
-  function addEntity (group, entity) {
+  function addEntity (entity, group) {
     entity.id = entityAutoId;
-    entities[group] = entities[group] ? entities[group]: [];
-    entities[group].push(entity);
+    if (group) {
+      groups[group] = groups[group] || {};
+      groups[group][entityAutoId] = entityAutoId;
+    }
+    entities[entityAutoId] = entity;
     entityAutoId ++;
     
     return entity;
@@ -609,24 +611,33 @@ var jas = {};
   
   
   function removeEntity (entity) {
-    var group = entity.group;
-    for (var i in entities[group]) {
-      if (entity.id == entities[group][i].id) {
-        entities[group].splice(i, 1);
-      }
+    for (var i in groups) {
+      delete groups[i][entity.id]; 
     }
+    delete entities[entity.id];
   }
   
   function getFirst(groupId) {
-    return entities[groupId] ? entities[groupId][0]: false;
+    if (groups[groupId]) {
+      return entities[Object.keys(groups[groupId]).sort()[0]];
+    }
+    else {
+      return false;
+    }
   }
   
   function getGroup (groupId) {
-    return entities[groupId];
+    var group = [];
+    //console.log(groups);
+    for (var i in groups[groupId]) {
+      var id = groups[groupId][i];
+      group.push(entities[id]);
+    }
+    return group;
   }
   
   function getMap (mapId) {
-    return entities[mapId] ? entities[mapId][0]: false;
+    return getGroup(mapId)[0];
   }
   
   jas.Entity = {
@@ -761,6 +772,7 @@ var jas = {};
     
     function renderMapLayer (mapId, layer) {
       var map = jas.Entity.getMap(mapId);
+      
       if (!map) {
         return;
       }
@@ -843,8 +855,8 @@ var jas = {};
     canvas = document.createElement("canvas");
     
     // no width? set to 320
-    canvas.width = w ? w: 320;
-    canvas.height = h ? h: 320;
+    canvas.width = w || 320;
+    canvas.height = h || 320;
     
     //if canvas won't work
     canvas.innerHTML = "<h3>Your browser doesn't support HTML5 canvas!</h3>";

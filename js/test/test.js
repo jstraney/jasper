@@ -12,7 +12,7 @@ jas.addState("main",
         return instance;
       });
       
-      jas.Entity.addEntity('player', jas.Entity.inst("player", {
+      jas.Entity.addEntity(jas.Entity.inst("player", {
         x: 32,
         y: 32,
         w: 32,
@@ -28,14 +28,14 @@ jas.addState("main",
           { name: "wl", start: 24, stop : 32, looping: true},
           { name: "sl", start: 24, stop : 25, looping: true}
         ]
-      }));
+      }), 'player');
       
     });
     
     jas.Asset.getMapData("map", "js/test/res/data/map-alt.tmx", function (mapData) {
       jas.Asset.newImage("tiles", "js/test/res/images/tileSet.png").then(function(){
         mapData.imageId = "tiles";
-        var map = jas.Entity.addEntity("map", jas.Entity.inst("map", mapData));
+        var map = jas.Entity.addEntity(jas.Entity.inst("map", mapData), "map");
         map.makeTiles();
       });
     });
@@ -52,8 +52,8 @@ jas.addState("main",
   
   function update (delta, controller) {
     var keys = controller.keys;
-    var p = jas.Entity.getFirst("player"),
-        map = jas.Entity.getMap("map");
+    var p,
+        map;
         
     var walls, activeTiles;
     
@@ -65,6 +65,7 @@ jas.addState("main",
     
     // get and update player
     if (p = jas.Entity.getFirst("player")) {
+      
       p.updateAnim();
       
       if (controller.keysNotPressed(["UP", "RIGHT", "DOWN", "LEFT"])) {
@@ -84,6 +85,7 @@ jas.addState("main",
         }  
       }
       else {
+        
         if (controller.isKeyDown("UP")) {
           p.moveUp();
           p.setAnim("wu");

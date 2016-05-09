@@ -36,6 +36,8 @@ gulp.task("js", function () {
   });
 });
 
+//todo: add a task to use browser-sync for dev purposes
+
 gulp.task("css", function () {
   return gulp.watch("style/less/*.less", function () {
     gulp.src("style/less/*.less")

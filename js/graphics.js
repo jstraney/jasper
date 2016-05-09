@@ -33,6 +33,7 @@
     
     function renderMapLayer (mapId, layer) {
       var map = jas.Entity.getMap(mapId);
+      
       if (!map) {
         return;
       }

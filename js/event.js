@@ -33,7 +33,6 @@
     },
     subscribe: function (pubId, subId, callback) {
       publications[pubId].addSubscriber(subId, callback);
-      console.log(publications);
     },
     unsubscribe: function (pubId, subId) {
       publications[pubId].removeSubscriber(subId);

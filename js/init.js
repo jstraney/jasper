@@ -27,8 +27,8 @@
     canvas = document.createElement("canvas");
     
     // no width? set to 320
-    canvas.width = w ? w: 320;
-    canvas.height = h ? h: 320;
+    canvas.width = w || 320;
+    canvas.height = h || 320;
     
     //if canvas won't work
     canvas.innerHTML = "<h3>Your browser doesn't support HTML5 canvas!</h3>";
