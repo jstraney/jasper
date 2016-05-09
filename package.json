@@ -12,7 +12,11 @@
     "arcade"
   ],
   "author": "Jeffrey Straney",
-  "license": "ISC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://www.github.com/thrakish/jasper/"
+  }
   "devDependencies": {
     "autoprefixer": "^6.3.3",
     "browser-sync": "^2.11.1",
