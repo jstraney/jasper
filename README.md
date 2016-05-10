@@ -28,13 +28,16 @@ your webpage. In this repository, use the copy under "dist".
 </html>
 ```
 Using the above example, you have a file of your own called
-"myGame.js" that uses Jasper. Here's what might go into that file.
+"myGame.js" that uses Jasper. Here's what might go into that file to create.
+a basic screen.
 
 ```js
-// A game be your main menu, game over screen, or the part where you
+// A game can be your main menu, game over screen, or the part where you
 // play. Be sure to include at least one.
 
 jas.addState("main",
+  //  you don't have to name these functions 'init', 'update' or 'render'
+  // this is just to provide clarity
   function init () {
     // Initialize entities, resources here.
   },
@@ -56,8 +59,53 @@ jas.begin();
 ```
 
 Jasper uses the namespace "jas". Within that space, there are various
-tools that extend jaspers functionality. The code above creates a simple game frame
+tools that extend jaspers functionality. Once you've made a game frame,
+you'll probably want to add stuff to it. I'm going to defer using jaspers sprite
+sprite class to make this a simple intro:
 
+```js
+// add this to your main game state's init function
+jas.addState("main",
+  function init () {
+    jas.Entity.addEntity(jas.Entity.inst("rect", {
+      x: 32,
+      y:32, 
+      w: 32, 
+      h:32, 
+      color: "#00f"}),
+    "playerGroup");
+  },
+  function update (delta, controller) {
+    var player;
+    
+    if (player = jas.Entity.getFirst("playerGroup") {
+      controller.keyIsDown("RIGHT", function () {
+        player.x++;
+      });
+    }
+  },
+  function render (graphics) {
+    graphics.renderGroup("playerGroup");
+  });
+```
+
+Now, you should have a blue rectangle that can move right when the arrow key is pressed.
+Think of an entity as the 'stuff' in your games frame. An entity could be a player, a wall,
+a gui component, a clipping area for collision. It's a game object.
+
+Entities are manipulated through groups. a group can contain entities of various classes, but it's recommended they share an interface and purpose ('rect' is an entity class). If you
+think rectangles are repulsive, you can make it a special rectangle:
+
+```js
+//add this to game state's init
+jas.Entity.newClass("player", function(mutator) {
+  mutator = mutator || {}; // recommended
+  var instance = this.rect(mutator);
+  instance.saySomething = function () {
+    
+  }
+});
+```
 
 ## License
 
