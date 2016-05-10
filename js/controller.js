@@ -54,17 +54,21 @@
     
     // init game controller
     var controller = {
-      isKeyDown: function (key) {
+      isKeyDown: function (key, callback) {
         var isIt = keys[keyCodes[key]];
+        if (isIt && typeof(callback) == "function") {
+          callback(); 
+        }
         return  isIt ? true: false;
       },
-      areKeysDown: function (keyArr) {
+      areKeysDown: function (keyArr, callback) {
         for (var i in keyArr) {
           var key = keyArr[i];
           if (!this.isKeyDown(key)) {
             return false;
           }
         }
+        typeof(callback) == "function" ? callback(): null;
         return true;
       },
       keysNotPressed: function (keyArr) {
@@ -74,6 +78,7 @@
             return false;
           }
         }
+        typeof(callback) == "function" ? callback(): null;
         return true;
       }
     };
