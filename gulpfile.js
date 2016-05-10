@@ -31,8 +31,8 @@ gulp.task("js", function () {
     gulp.src("js/dist/jasper.js")
       .pipe(concat("jasper.min.js"))
       .pipe(uglify())
-      .pipe(gulp.dest("."))
-      .pipe(gulp.dest("../test"));
+      .pipe(gulp.dest("js/dist/"))
+      .pipe(gulp.dest("js/test/"));
   });
 });
 
