@@ -12,6 +12,7 @@ jas.addState("main",
         return instance;
       });
       
+      // add a new entity of type 'player'
       jas.Entity.addEntity(jas.Entity.inst("player", {
         x: 32,
         y: 32,
@@ -32,43 +33,54 @@ jas.addState("main",
       
     });
     
+    // get map data
     jas.Asset.getMapData("map", "js/test/res/data/map-alt.tmx", function (mapData) {
+      // when the data is parsed get the image
       jas.Asset.newImage("tiles", "js/test/res/images/tileSet.png").then(function(){
+        // when the image is done make an entity from the data
         mapData.imageId = "tiles";
         var map = jas.Entity.addEntity(jas.Entity.inst("map", mapData), "map");
+        // We'll define a special entity for the 'active-tiles'
+        jas.Entity.newClass("active-tile", function (mutator) {
+          mutator = mutator || {}; // not necessary, but I do this
+          var instance = this.tile(mutator);
+          instance.activate = mutator.activate;
+          
+          
+        });
+        // now we'll sub-class the active tiles
+        jas.Entity.newClass("trap", function (mutator) {
+          mutator = mutator || {};
+        });
+        jas.Entity.newClass("stairs", function (mutator) {
+          mutator = mutator || {};
+        });
+        // initialize the maps tiles
         map.makeTiles();
       });
     });
     
-    jas.Event.addPublication("onActiveTile");
-    
-    jas.Event.subscribe("onActiveTile", "doDamage", function (event) {
-      event = event || {};
-      console.log(event.dmg);
-      console.log(event.type);
-    });
     
   },
   
-  function update (delta, controller) {
-    var keys = controller.keys;
+  function update (delta, Controller) {
+    var keys = Controller.keys;
     var p,
         map;
         
     var walls, activeTiles;
     
     
-    if (map) {
+    if (map = jas.Entity.getMap("map")) {
       walls = map.layers.walls.tiles;
       activeTiles = map.layers.active_tiles.tiles;
     }
     
     // get and update player
     if (p = jas.Entity.getFirst("player")) {
-      
       p.updateAnim();
       
-      if (controller.keysNotPressed(["UP", "RIGHT", "DOWN", "LEFT"])) {
+      if (Controller.keysNotPressed(["UP", "RIGHT", "DOWN", "LEFT"])) {
         switch(p.getAnimId()) {
           case "wu":
             p.setAnim("su");
@@ -86,22 +98,22 @@ jas.addState("main",
       }
       else {
         
-        if (controller.isKeyDown("UP")) {
+        Controller.isKeyDown("UP", function() {
           p.moveUp();
           p.setAnim("wu");
-        }
-        if (controller.isKeyDown("RIGHT")) {
+        });
+        Controller.isKeyDown("RIGHT", function() {
           p.moveRight();
           p.setAnim("wr");
-        }
-        if (controller.isKeyDown("DOWN")) {
+        })
+        Controller.isKeyDown("DOWN", function() {
           p.moveDown();
           p.setAnim("wd");
-        }
-        if (controller.isKeyDown("LEFT")) {
+        });
+        Controller.isKeyDown("LEFT", function() {
           p.moveLeft();
           p.setAnim("wl");
-        }
+        });
       }
       
       var checkingWalls = true;
@@ -123,19 +135,14 @@ jas.addState("main",
         })
       }
     }
-    
-    if (map) {
-      
-    }
-    
   },
   
-  function render (graphics) {
-    graphics.fillScreen("#088");
-    graphics.renderMapLayer("map", "floor");
-    graphics.renderMapLayer("map", "active_tiles");
-    graphics.renderGroup("player");
-    graphics.renderMapLayer("map", "walls");
+  function render (Graphics) {
+    Graphics.fillScreen("#088");
+    Graphics.renderMapLayer("map", "floor");
+    Graphics.renderMapLayer("map", "active_tiles");
+    Graphics.renderGroup("player");
+    Graphics.renderMapLayer("map", "walls");
     
   }
 );

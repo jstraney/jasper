@@ -278,8 +278,8 @@ var jas = {};
     
     rect: function (mutator) {
       var instance = this.solid(mutator);
-      var color = mutator.color? mutator.color: null;
-      var alpha = mutator.alpha? mutator.alpha: null;
+      var color = mutator.color || null;
+      var alpha = mutator.alpha || null;
       
       instance.getDraw = function () {
         return {
@@ -295,7 +295,7 @@ var jas = {};
       return instance;
     },
     component: function (mutator) {
-      var mutator = mutator? mutator: {};
+      var mutator = mutator || {};
       var instance = this.rect(mutator);
       var parent;
       function widget () {
@@ -708,17 +708,21 @@ var jas = {};
     
     // init game controller
     var controller = {
-      isKeyDown: function (key) {
+      isKeyDown: function (key, callback) {
         var isIt = keys[keyCodes[key]];
+        if (isIt && typeof(callback) == "function") {
+          callback(); 
+        }
         return  isIt ? true: false;
       },
-      areKeysDown: function (keyArr) {
+      areKeysDown: function (keyArr, callback) {
         for (var i in keyArr) {
           var key = keyArr[i];
           if (!this.isKeyDown(key)) {
             return false;
           }
         }
+        typeof(callback) == "function" ? callback(): null;
         return true;
       },
       keysNotPressed: function (keyArr) {
@@ -728,6 +732,7 @@ var jas = {};
             return false;
           }
         }
+        typeof(callback) == "function" ? callback(): null;
         return true;
       }
     };
@@ -827,14 +832,8 @@ var jas = {};
   
 })(jas);
 (function (jas) {
-  var stateAutoId = 0;
-  
-  // Gamestates
-  var states = {};
-  var state = null;
-  
   // frame
-  var canvas, ctx, controller, graphics;
+  var canvas, ctx, Controller, Graphics;
 
   
   // animation
@@ -864,18 +863,12 @@ var jas = {};
     
     ctx = canvas.getContext("2d");
     
-    controller = jas.controllerFactory(canvas);
-    graphics = jas.graphicsFactory(canvas, ctx);
+    Controller = jas.controllerFactory(canvas);
+    Graphics = jas.graphicsFactory(canvas, ctx);
     
     gameFrame.appendChild(canvas);
     // init game states
-    if (Object.keys(states).length == 0) {
-      initError("You must inject at least one game state using jas.addState\n");  
-    }
-
-    for (var i in states) {
-      states[i].init();
-    }
+    jas.State.initStates();
 
   }
   
@@ -886,25 +879,31 @@ var jas = {};
   
   function main() {
     var now = Date.now() - then;
-    state.update(now, controller);
-    state.render(graphics);
+    state.update(now, Controller);
+    state.render(Graphics);
     requestAnimationFrame(main);
   }
   
   
+  jas.init = init;
+  jas.begin = begin;
+  
+    
+})(jas);
+(function (jas) {
+  var states = {};
+  var stateAutoId = 0;
+  
+  var state = null;
   // GAME STATES PUBLIC API
   function addState (stateName, init, update, render) {
     
-    var stateInit = init;
-    
-    var newState = {
+    states[stateName] = {
       stateName: stateName,
-      init: stateInit,
+      init: init,
       update: update,
       render: render
     };
-    
-    states[stateName] = newState;
     
     if (state == undefined) {
       state = newState;
@@ -915,9 +914,25 @@ var jas = {};
     state = states[stateId];
   }
   
-  jas.init = init;
-  jas.begin = begin;
-  jas.addState = addState;
-  jas.changeState = changeState;
-    
+  function initAllStates() {
+    if (Object.keys(states).length == 0) {
+      initError("You must inject at least one game state using jas.addState\n");  
+    }
+
+    for (var i in states) {
+      states[i].init();
+    } 
+  }
+  
+  function initState(stateName) {
+    states[stateName].init();  
+  }
+  
+  jas.State = {
+    addState: addState,
+    changeState: changeState,
+    initAllStates: initAllStates,
+    initState: initState
+  };
+  
 })(jas);
