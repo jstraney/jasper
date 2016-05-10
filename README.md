@@ -1,7 +1,7 @@
 ## Synopsis
 
 Jasper arcade is an arcade game framework for the web! It strives to
-be intuitive and modular. Jasper a framework that:
+be intuitive and modular. Jasper's a framework that:
 
 <ul>
   <li> Is a client side game solution for modern browsers</li>
@@ -28,8 +28,8 @@ your webpage. In this repository, use the copy under "dist".
 </html>
 ```
 Using the above example, you have a file of your own called
-"myGame.js" that uses Jasper. Here's what might go into that file to create.
-a basic screen.
+"myGame.js" that uses Jasper. Here's what might go into that file to create
+a game screen.
 
 ```js
 // A game can be your main menu, game over screen, or the part where you
@@ -59,7 +59,7 @@ jas.begin();
 ```
 
 Jasper uses the namespace "jas". Within that space, there are various
-tools that extend jaspers functionality. Once you've made a game frame,
+modules that extend jaspers functionality. Once you've made a game frame,
 you'll probably want to add stuff to it. I'm going to defer using jaspers sprite
 sprite class to make this a simple intro:
 
@@ -78,11 +78,12 @@ jas.addState("main",
   function update (delta, controller) {
     var player;
     
-    if (player = jas.Entity.getFirst("playerGroup") {
+    // look how little 'if' logic there is up front!
+    jas.Entity.getFirst("playerGroup", function() {
       controller.keyIsDown("RIGHT", function () {
         player.x++;
       });
-    }
+    });
   },
   function render (graphics) {
     graphics.renderGroup("playerGroup");
@@ -93,19 +94,26 @@ Now, you should have a blue rectangle that can move right when the arrow key is 
 Think of an entity as the 'stuff' in your games frame. An entity could be a player, a wall,
 a gui component, a clipping area for collision. It's a game object.
 
-Entities are manipulated through groups. a group can contain entities of various classes, but it's recommended they share an interface and purpose ('rect' is an entity class). If you
+Entities are manipulated through groups. a group can contain entities of various classes, but it's recommended they share an interface and purpose. If you
 think rectangles are repulsive, you can make it a special rectangle:
 
 ```js
 //add this to game state's init
 jas.Entity.newClass("player", function(mutator) {
   mutator = mutator || {}; // recommended
-  var instance = this.rect(mutator);
+  var instance = this.rect(mutator); // 'this' is 'jas.Entity'. we're
+  extending it
+  var health = 10;
+
   instance.saySomething = function () {
-    
+    console.log("I have " +  health + " health!");  
   }
 });
 ```
+
+This is just a peak at some of the syntax and tools Jasper has to
+offer. To learn more, visit the
+[wiki](https://github.com/thrakish/jasper/wiki).
 
 ## License
 
