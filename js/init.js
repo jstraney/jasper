@@ -1,12 +1,6 @@
 (function (jas) {
-  var stateAutoId = 0;
-  
-  // Gamestates
-  var states = {};
-  var state = null;
-  
   // frame
-  var canvas, ctx, controller, graphics;
+  var canvas, ctx, Controller, Graphics;
 
   
   // animation
@@ -36,18 +30,12 @@
     
     ctx = canvas.getContext("2d");
     
-    controller = jas.controllerFactory(canvas);
-    graphics = jas.graphicsFactory(canvas, ctx);
+    Controller = jas.controllerFactory(canvas);
+    Graphics = jas.graphicsFactory(canvas, ctx);
     
     gameFrame.appendChild(canvas);
     // init game states
-    if (Object.keys(states).length == 0) {
-      initError("You must inject at least one game state using jas.addState\n");  
-    }
-
-    for (var i in states) {
-      states[i].init();
-    }
+    jas.State.initStates();
 
   }
   
@@ -58,38 +46,14 @@
   
   function main() {
     var now = Date.now() - then;
-    state.update(now, controller);
-    state.render(graphics);
+    state.update(now, Controller);
+    state.render(Graphics);
     requestAnimationFrame(main);
   }
   
   
-  // GAME STATES PUBLIC API
-  function addState (stateName, init, update, render) {
-    
-    var stateInit = init;
-    
-    var newState = {
-      stateName: stateName,
-      init: stateInit,
-      update: update,
-      render: render
-    };
-    
-    states[stateName] = newState;
-    
-    if (state == undefined) {
-      state = newState;
-    }
-  } 
-  
-  function changeState(stateId) {
-    state = states[stateId];
-  }
-  
   jas.init = init;
   jas.begin = begin;
-  jas.addState = addState;
-  jas.changeState = changeState;
+  
     
 })(jas);

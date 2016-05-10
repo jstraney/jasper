@@ -63,8 +63,8 @@
     
     rect: function (mutator) {
       var instance = this.solid(mutator);
-      var color = mutator.color? mutator.color: null;
-      var alpha = mutator.alpha? mutator.alpha: null;
+      var color = mutator.color || null;
+      var alpha = mutator.alpha || null;
       
       instance.getDraw = function () {
         return {
@@ -80,7 +80,7 @@
       return instance;
     },
     component: function (mutator) {
-      var mutator = mutator? mutator: {};
+      var mutator = mutator || {};
       var instance = this.rect(mutator);
       var parent;
       function widget () {
