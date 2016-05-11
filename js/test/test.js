@@ -59,18 +59,22 @@ jas.State.addState("main",
       mutator.color = "#0f0";
       var instance = this.rect(mutator);
       var spawnRate = mutator.spawnRate;
-      var lastSpawn = Date.now();
+      var timer = jas.Util.timer(spawnRate, true);
+      timer.start();
+      
       var maxCherries = 5;
       var cherries = 0;
-      instance.spawn = function () {
-        if (Date.now() - lastSpawn > spawnRate && cherries < maxCherries) {
-          lastSpawn = Date.now();
-          var ranX = Math.floor(Math.random() * (instance.x + instance.w)) + 1;
-          var ranY = Math.floor(Math.random() * (instance.x + instance.h)) + 1;
-          jas.Entity.addEntity(jas.Entity.inst("cherry", {x: ranX, y: ranY}), "cherries");
-          cherries++;
+      instance.spawn = (function () {
+        if (cherries < maxCherries) {
+          timer.checkTime(function() {
+            var ranX = Math.floor(Math.random() * (instance.x + instance.w)) + 1;
+            var ranY = Math.floor(Math.random() * (instance.y + instance.h)) + 1;
+            jas.Entity.addEntity(jas.Entity.inst("cherry", {x: ranX, y: ranY}), "cherries");
+            cherries++;
+            
+          });
         }
-      };
+      });
       
       jas.Event.addPublication("pickupCherry");
       jas.Event.subscribe("pickupCherry", "removeCherry", function (cherry) {
@@ -82,7 +86,7 @@ jas.State.addState("main",
     });
     
     jas.Entity.addEntity(jas.Entity.inst("cherrySpawnZone",
-      {x: 32, y: 32, w: 256, h: 256, spawnRate: 2000}),
+      {x: 32, y: 32, w: 224, h: 224, spawnRate: 5000}),
     "spawnZones");
     
     // get map data

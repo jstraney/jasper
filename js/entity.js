@@ -79,10 +79,12 @@
       
       return instance;
     },
+    // todo: make a GUI component class
     component: function (mutator) {
       var mutator = mutator || {};
       var instance = this.rect(mutator);
       var parent;
+      // a widget will be a component that contains components
       function widget () {
         var components = {};
         instance.addComponent = function (component) {
