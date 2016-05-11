@@ -1,21 +1,20 @@
-NOTES fOR JASPER ARCADE
-currently...
-  add a spawnPoint class
-  
+NOTES fOR JASPER
 
-assets...
-  create a json schema for entities. can integrate into tiled?
-  figure out audio. Could use Howler js
-
-the basic functionality for entitites should include:
-  private animation classes. <-- needs testing + features
-  gui entities. <-- haven't started
+Entity
+  * component and widget entity
+  * text entity
+  * spawnzone // maybe an extention of a general 'zone' entity
   
-
-on the table...
-  physics?
-    have a physics component that wraps entities
-    and changes the x and y based on vector math
-    with other colliders
-  Pretty much got it =(
+Util
+  * pathfinder
   
+Init
+  
+Event
+  
+Asset
+  * create audio asset
+State
+  
+Graphics
+  * extra fancy webGL things
