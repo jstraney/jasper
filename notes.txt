@@ -1,18 +1,14 @@
 NOTES fOR JASPER ARCADE
 currently...
-  publish and subscribe model
-  work on injecting mutators into enumClasses
-  change all " ? : ;" statements to "||"
+  add a spawnPoint class
   
-cleaner API...
-  refactor class mutator functions to get x, y, w, h from mutator object
 
 assets...
   create a json schema for entities. can integrate into tiled?
   figure out audio. Could use Howler js
 
 the basic functionality for entitites should include:
-  private animation classes. <-- needs testing
+  private animation classes. <-- needs testing + features
   gui entities. <-- haven't started
   
 

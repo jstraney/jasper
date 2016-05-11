@@ -1,4 +1,5 @@
 var gulp = require("gulp"),
+   gutil = require("gulp-util"),
    concat = require("gulp-concat"),
    uglify = require("gulp-uglify"),
    less = require("gulp-less"),
@@ -30,7 +31,7 @@ gulp.task("js", function () {
       
     gulp.src("js/dist/jasper.js")
       .pipe(concat("jasper.min.js"))
-      .pipe(uglify())
+      .pipe(uglify().on('error', gutil.log))
       .pipe(gulp.dest("js/dist/"))
       .pipe(gulp.dest("js/test/"));
   });

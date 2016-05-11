@@ -615,26 +615,30 @@ var jas = {};
     delete entities[entity.id];
   }
   
-  function getFirst(groupId) {
+  function getFirst(groupId, callback) {
     if (groups[groupId]) {
-      return entities[Object.keys(groups[groupId]).sort()[0]];
-    }
-    else {
-      return false;
+      var entity = entities[Object.keys(groups[groupId]).sort()[0]];
+      if (entity && typeof(callback) == "function") {
+        callback(entity);
+        return entity;
+      }
     }
   }
   
-  function getGroup (groupId) {
+  function getGroup (groupId, callback) {
     var group = [];
     //console.log(groups);
     for (var i in groups[groupId]) {
       var id = groups[groupId][i];
       group.push(entities[id]);
     }
+    if (typeof(callback) == "function") {
+      group.forEach(callback); 
+    }
     return group;
   }
   
-  function getMap (mapId) {
+  function getMap (mapId, callback) {
     return getGroup(mapId)[0];
   }
   
@@ -866,7 +870,7 @@ var jas = {};
     
     gameFrame.appendChild(canvas);
     // init game states
-    jas.State.initStates();
+    jas.State.initAllStates();
 
   }
   
@@ -877,8 +881,7 @@ var jas = {};
   
   function main() {
     var now = Date.now() - then;
-    state.update(now, Controller);
-    state.render(Graphics);
+    jas.State.updateState(now, Controller, Graphics);
     requestAnimationFrame(main);
   }
   
@@ -903,10 +906,15 @@ var jas = {};
       render: render
     };
     
-    if (state == undefined) {
-      state = newState;
+    if (state == null) {
+      state = states[stateName];
     }
-  } 
+  }
+  
+  function updateState (now, Controller, Graphics) {
+    state.update(now, Controller);
+    state.render(Graphics); 
+  }
   
   function changeState(stateId) {
     state = states[stateId];
@@ -930,7 +938,8 @@ var jas = {};
     addState: addState,
     changeState: changeState,
     initAllStates: initAllStates,
-    initState: initState
+    initState: initState,
+    updateState: updateState
   };
   
 })(jas);

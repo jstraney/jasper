@@ -35,7 +35,7 @@
     
     gameFrame.appendChild(canvas);
     // init game states
-    jas.State.initStates();
+    jas.State.initAllStates();
 
   }
   
@@ -46,8 +46,7 @@
   
   function main() {
     var now = Date.now() - then;
-    state.update(now, Controller);
-    state.render(Graphics);
+    jas.State.updateState(now, Controller, Graphics);
     requestAnimationFrame(main);
   }
   

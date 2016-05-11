@@ -1,7 +1,7 @@
 /* global namespace jas*/
-jas.addState("main",
+jas.State.addState("main",
   function init () {
-    jas.Asset.newImage("player", "js/test/res/images/player.png", function () {
+    jas.Asset.newImage("player", "res/images/player.png", function () {
       // define a new class based on sprite
       jas.Entity.newClass("player", function (mutator) {
         var instance = this.sprite(mutator); // 'this' is Entity with capital E
@@ -33,28 +33,66 @@ jas.addState("main",
       
     });
     
+    jas.Asset.newImage("cherry", "res/images/cherry.png", function () {
+      jas.Entity.newClass("cherry", function (mutator) {
+        mutator = mutator || {};
+        mutator.w = 32;
+        mutator.h = 32;
+        mutator.imageId = "cherry";
+        mutator.animations = [
+          {name: "still", start: 0, stop: 1, def: true}
+        ];
+        var instance = this.sprite(mutator);
+        var points = 20;
+        
+        instance.pickUp = function () {
+          jas.Event.publish("pickupCherry", instance);
+        }
+        
+        return instance;
+      });
+    });
+    
+    jas.Entity.newClass("cherrySpawnZone", function (mutator) {
+      mutator = mutator || {};
+      mutator.alpha = 0.5;
+      mutator.color = "#0f0";
+      var instance = this.rect(mutator);
+      var spawnRate = mutator.spawnRate;
+      var lastSpawn = Date.now();
+      var maxCherries = 5;
+      var cherries = 0;
+      instance.spawn = function () {
+        if (Date.now() - lastSpawn > spawnRate && cherries < maxCherries) {
+          lastSpawn = Date.now();
+          var ranX = Math.floor(Math.random() * (instance.x + instance.w)) + 1;
+          var ranY = Math.floor(Math.random() * (instance.x + instance.h)) + 1;
+          jas.Entity.addEntity(jas.Entity.inst("cherry", {x: ranX, y: ranY}), "cherries");
+          cherries++;
+        }
+      };
+      
+      jas.Event.addPublication("pickupCherry");
+      jas.Event.subscribe("pickupCherry", "removeCherry", function (cherry) {
+        jas.Entity.removeEntity(cherry);
+        cherries--;
+      });
+      
+      return instance;
+    });
+    
+    jas.Entity.addEntity(jas.Entity.inst("cherrySpawnZone",
+      {x: 32, y: 32, w: 256, h: 256, spawnRate: 2000}),
+    "spawnZones");
+    
     // get map data
-    jas.Asset.getMapData("map", "js/test/res/data/map-alt.tmx", function (mapData) {
+    jas.Asset.getMapData("map", "res/data/map-alt.tmx", function (mapData) {
       // when the data is parsed get the image
-      jas.Asset.newImage("tiles", "js/test/res/images/tileSet.png").then(function(){
+      jas.Asset.newImage("tiles", "res/images/tileSet.png").then(function(){
         // when the image is done make an entity from the data
         mapData.imageId = "tiles";
         var map = jas.Entity.addEntity(jas.Entity.inst("map", mapData), "map");
-        // We'll define a special entity for the 'active-tiles'
-        jas.Entity.newClass("active-tile", function (mutator) {
-          mutator = mutator || {}; // not necessary, but I do this
-          var instance = this.tile(mutator);
-          instance.activate = mutator.activate;
-          
-          
-        });
-        // now we'll sub-class the active tiles
-        jas.Entity.newClass("trap", function (mutator) {
-          mutator = mutator || {};
-        });
-        jas.Entity.newClass("stairs", function (mutator) {
-          mutator = mutator || {};
-        });
+
         // initialize the maps tiles
         map.makeTiles();
       });
@@ -66,10 +104,16 @@ jas.addState("main",
   function update (delta, Controller) {
     var keys = Controller.keys;
     var p,
-        map;
+        map,
+        cherySpawn,
+        cherries;
         
     var walls, activeTiles;
     
+    jas.Entity.getFirst("spawnZones", function (e) {
+      cherrySpawn = e;
+      cherrySpawn.spawn();
+    });
     
     if (map = jas.Entity.getMap("map")) {
       walls = map.layers.walls.tiles;
@@ -77,7 +121,9 @@ jas.addState("main",
     }
     
     // get and update player
-    if (p = jas.Entity.getFirst("player")) {
+    jas.Entity.getFirst("player", function (e) {
+      p = e;
+      
       p.updateAnim();
       
       if (Controller.keysNotPressed(["UP", "RIGHT", "DOWN", "LEFT"])) {
@@ -127,20 +173,20 @@ jas.addState("main",
         })
       }
       
-      for (var j in activeTiles) {
-        var tile = activeTiles[j];
-        //console.log(trap);
-        p.isColliding(tile, function () {
-          tile.activate();
-        })
-      }
-    }
+      jas.Entity.getGroup("cherries", function(e) {
+        e.isColliding(p, function () {
+          e.pickUp();
+        });
+      });
+      
+    });
   },
   
   function render (Graphics) {
     Graphics.fillScreen("#088");
     Graphics.renderMapLayer("map", "floor");
     Graphics.renderMapLayer("map", "active_tiles");
+    Graphics.renderGroup("cherries");
     Graphics.renderGroup("player");
     Graphics.renderMapLayer("map", "walls");
     

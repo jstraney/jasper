@@ -400,26 +400,30 @@
     delete entities[entity.id];
   }
   
-  function getFirst(groupId) {
+  function getFirst(groupId, callback) {
     if (groups[groupId]) {
-      return entities[Object.keys(groups[groupId]).sort()[0]];
-    }
-    else {
-      return false;
+      var entity = entities[Object.keys(groups[groupId]).sort()[0]];
+      if (entity && typeof(callback) == "function") {
+        callback(entity);
+        return entity;
+      }
     }
   }
   
-  function getGroup (groupId) {
+  function getGroup (groupId, callback) {
     var group = [];
     //console.log(groups);
     for (var i in groups[groupId]) {
       var id = groups[groupId][i];
       group.push(entities[id]);
     }
+    if (typeof(callback) == "function") {
+      group.forEach(callback); 
+    }
     return group;
   }
   
-  function getMap (mapId) {
+  function getMap (mapId, callback) {
     return getGroup(mapId)[0];
   }
   
