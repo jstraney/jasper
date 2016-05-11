@@ -126,8 +126,6 @@
         var fps = animMutator.fps? animMutator.fps: 12;
         
         var frames = [];
-        
-        
         for ( var i = start; i < stop; i++) {
           var x = (i * w) % imageW;
           var y = Math.floor((i * w) / imageW) * h;
@@ -137,23 +135,29 @@
         //console.log(stop);
         
         var currentFrame = 0;
-        var lastUpdate = Date.now();
         var done = false;
         
+        var timer = jas.Util.timer();
+        timer.start();
+        timer.setTimer(1000/fps);
+        
         animation.update = function () {
-          var now = Date.now();
-          
-          if ((now - lastUpdate)/1000 >= 1/fps && !done) {
-            lastUpdate = Date.now();
+          if (done) {
+            return; 
+          }
+          timer.checkTime(function() {
             var lastFrame = ++currentFrame >= frames.length;
+            
             if (lastFrame && looping) {
               currentFrame = 0;
             }
+            
             else if (lastFrame) {
               currentFrame = frames.length - 1;
               done = true
             }
-          }
+            
+          });
         };
         
         animation.getCurrentFrame = function () {

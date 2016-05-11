@@ -22,12 +22,12 @@
       }
       var now = Date.now();
       if (now - then >= interval) {
-        if (typeof(itsTime == "function")) {
+        if (typeof(itsTime) == "function") {
           itsTime();
         }
       }
       else {
-        if (typeof(notTime == "function")) {
+        if (typeof(notTime) == "function") {
           notTime();
         }
       }

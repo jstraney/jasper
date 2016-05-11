@@ -16,11 +16,13 @@ gulp.task("js", function () {
       .pipe(order([
         'xml2json.min.js',
         'jasper.js',
+        'util.js',
         'event.js',
         'asset.js',
         'entity.js',
         'controller.js',
         'graphics.js',
+        'state.js',
         'init.js'
         ]))
       .pipe(plumber())
