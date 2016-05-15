@@ -33,61 +33,67 @@ jas.State.addState("main",
       
     });
     
+    jas.Event.addPublication("pickUpFruit");
+    
     jas.Asset.newImage("cherry", "res/images/cherry.png", function () {
-      jas.Entity.newClass("cherry", function (mutator) {
+      jas.Entity.newClass("fruit", function (mutator) {
         mutator = mutator || {};
         mutator.w = 32;
         mutator.h = 32;
-        mutator.imageId = "cherry";
-        mutator.animations = [
-          {name: "still", start: 0, stop: 1, def: true}
-        ];
+        
         var instance = this.sprite(mutator);
-        var points = 20;
         
-        instance.pickUp = function () {
-          jas.Event.publish("pickupCherry", instance);
-        }
+        var points = mutator.points;
         
+        instance.pickup = function() {
+          jas.Event.publish("pickUpFruit", {points: points, id: instance.id});
+        };
+
         return instance;
       });
-    });
-    
-    jas.Entity.newClass("cherrySpawnZone", function (mutator) {
-      mutator = mutator || {};
-      mutator.alpha = 0.5;
-      mutator.color = "#0f0";
-      var instance = this.rect(mutator);
-      var spawnRate = mutator.spawnRate;
-      var timer = jas.Util.timer(spawnRate, true);
-      timer.start();
       
-      var maxCherries = 5;
-      var cherries = 0;
-      instance.spawn = (function () {
-        if (cherries < maxCherries) {
-          timer.checkTime(function() {
-            var ranX = Math.floor(Math.random() * (instance.x + instance.w)) + 1;
-            var ranY = Math.floor(Math.random() * (instance.y + instance.h)) + 1;
-            jas.Entity.addEntity(jas.Entity.inst("cherry", {x: ranX, y: ranY}), "cherries");
-            cherries++;
-            
-          });
-        }
+      jas.Entity.newClass("cherry", function (mutator) {
+        mutator.points = 20;
+        mutator.imageId = "cherry";
+        var instance = this.fruit(mutator);
       });
       
-      jas.Event.addPublication("pickupCherry");
-      jas.Event.subscribe("pickupCherry", "removeCherry", function (cherry) {
-        jas.Entity.removeEntity(cherry);
-        cherries--;
+      jas.Entity.newClass("cherry", function (mutator) {
+        mutator.points = 20;
+        mutator.imageId = "cherry";
+        var instance = this.fruit(mutator);
       });
       
-      return instance;
+      jas.Entity.newClass("cherry", function (mutator) {
+        mutator.points = 20;
+        mutator.imageId = "cherry";
+        var instance = this.fruit(mutator);
+      });
+      
+      var fruitSpawnZone = jas.Entity.inst("spawnZone", {
+        x: 32,
+        y: 32,
+        w: 256,
+        h: 256,
+        spawnType: "cherry",
+        spawnMutator: {h: 32, w: 32},
+        spawnRate: 3000,
+        spawnPosition: "random",
+        spawnMax: 5,
+        spawnGroup: "fruit"
+      });
+      
+      jas.Event.subscribe("pickUpFruit", "fruitSpawnZone", function (fruit) {
+        fruitSpawnZone.removeSpawnById(fruit.id);
+        console.log(fruit.points + " points!!!");
+      });
+      
+      jas.Entity.addEntity( fruitSpawnZone, "spawnZones");
+      
+      
     });
     
-    jas.Entity.addEntity(jas.Entity.inst("cherrySpawnZone",
-      {x: 32, y: 32, w: 224, h: 224, spawnRate: 5000}),
-    "spawnZones");
+    
     
     // get map data
     jas.Asset.getMapData("map", "res/data/map-alt.tmx", function (mapData) {
@@ -177,9 +183,9 @@ jas.State.addState("main",
         })
       }
       
-      jas.Entity.getGroup("cherries", function(e) {
-        e.isColliding(p, function () {
-          e.pickUp();
+      jas.Entity.getGroup("cherries", function(cherry) {
+        cherry.isColliding(p, function () {
+          cherry.pickup();
         });
       });
       
@@ -189,7 +195,7 @@ jas.State.addState("main",
   function render (Graphics) {
     Graphics.fillScreen("#088");
     Graphics.renderMapLayer("map", "floor");
-    Graphics.renderMapLayer("map", "active_tiles");
+    //Graphics.renderMapLayer("map", "active_tiles");
     Graphics.renderGroup("cherries");
     Graphics.renderGroup("player");
     Graphics.renderMapLayer("map", "walls");

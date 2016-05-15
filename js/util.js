@@ -80,7 +80,31 @@
     }
   }
   
+  function finiteStateMachine () {
+    // the finite state machine will be used in entities. possibly other things
+    var states = {};
+    
+    function setState (state, status) {
+      states[state] = status;
+    }
+    
+    function getState (state) {
+      return states[state];
+    }
+    
+    function checkStatus (state, status) {
+      return states[state] == status? true: false;
+    }
+    
+    return {
+      setState: setState,
+      getState: getState,
+      checkStatus: checkStatus
+    };
+  }
+  
   jas.Util = {
-    timer: timer
+    timer: timer,
+    finiteStateMachine: finiteStateMachine
   }
 })(jas);
