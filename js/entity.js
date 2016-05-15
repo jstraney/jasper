@@ -9,10 +9,36 @@
   var classes = {
     entity: function (mutator) {
       var instance = {};
-      instance.x = mutator.x;
-      instance.y = mutator.y;
-      instance.w = mutator.w;
-      instance.h = mutator.h;
+      mutator = mutator || {};
+      var fst = jas.Util.finiteStateMachine();
+      instance.setState = function (state, status) {
+        fst.setState(state, status);
+      }
+      
+      instance.getState = function (state) {
+        return fst.getState(state);
+      }
+      
+      instance.checkStatus = function (state, status, statusTrue, statusFalse) {
+        if (fst.checkStatus(state, status)) {
+          if (typeof(statusTrue) == "function") {
+            statusTrue();
+          }
+          return true;
+        }
+        else {
+          if (typeof(statusFalse) == "function") {
+            statusFalse();
+          }
+          return false;
+        }
+      }
+      instance.id = entityAutoId;
+      entityAutoId++;
+      instance.x = mutator.x || 0;
+      instance.y = mutator.y || 0;
+      instance.w = mutator.w || 0;
+      instance.h = mutator.h || 0;
       
       return instance;
     },
@@ -40,7 +66,9 @@
         return collideable;
       }
       
-      
+      // todo: right now, these two functions treat all solids as rectangles.
+      // relocate these into the 'rect' class, but creat a 'circ' class
+      // that shares the same interface.
       instance.isColliding = function (collider, success, failure) {
         if (this.isCollideable && collider.isCollideable) {
           // collision vectors
@@ -50,13 +78,30 @@
           var v4 = collider.y + collider.h > this.y;
           if (v1 && v2 && v3 && v4) {
             typeof(success)=="function"? success(): null;
+            return true;
           }
           else {
             typeof(failure)=="function"? failure(): null;
-            
+            return false;
           }
         }
       }
+      
+      instance.contains = function (vector, success, failure) {
+        var v1 = vector.x > instance.x;
+        var v2 = vector.x < instance.x + instance.w;
+        var v3 = vector.y > instance.y;
+        var v4 = verctor.y < instance.y + instance.h;
+        
+        if (v1 && v2 && v3 && v4) {
+          typeof(success)=="function"? success(): null;
+          return true;
+        }
+        else {
+          typeof(failure)=="function"? failure(): null;
+          return false;
+        }
+      };
       
       return instance;
     },
@@ -66,6 +111,29 @@
       var color = mutator.color || null;
       var alpha = mutator.alpha || null;
       
+      instance.getOrigin = function () {
+        return {x: instance.x, y: instance.y};
+      }
+      
+      instance.getCenter = function () {
+        var x = instance.x + instance.w / 2;
+        var y = instance.y + instance.h / 2;
+        return {x: x, y : y};
+      };
+      
+      instance.getArea = function () {
+        return instance.w * instance.h; 
+      }
+      
+      instance.getRandomVector = function (xShift, yShift, xUpperLimit, yUpperLimit) {
+        xUpperLimit = xUpperLimit || 0;
+        yUpperLimit = yUpperLimit || 0;
+        var ranX = (Math.random() * (instance.w + xUpperLimit)) + instance.x + xShift;
+        var ranY = (Math.random() * (instance.h + yUpperLimit)) + instance.y + yShift;
+        return {x: ranX, y: ranY};
+      };
+      
+      // a rectangle is a solid that can be drawn like a rectangle.
       instance.getDraw = function () {
         return {
           type: "rect",
@@ -73,7 +141,8 @@
           y: this.y,
           w: this.w,
           h: this.h,
-          color: color
+          color: color,
+          alpha: alpha
         };
       }
       
@@ -102,9 +171,8 @@
       var instance = this.solid(mutator);
       
       function animationFactory(animMutator) {
-        
+        // inner frame class
         function frame (sx, sy, sw, sh) {
-          
           return {
             sx: sx,
             sy: sy,
@@ -194,6 +262,8 @@
       var imageH = jas.Asset.getImage(imageId).height;
       
       instance.animations = {};
+      
+      mutator.animations = mutator.animations || [{name:"still", start: 0, stop: 1, def: true}];
       
       for (var i in mutator.animations) {
         var animData = mutator.animations[i];
@@ -292,7 +362,86 @@
       
       return instance;
     },
-    
+    spawnZone: function (mutator) {
+      var mutator = mutator || {};
+      mutator.alpha = mutator.alpha || .4; // set transparency for testing/rendering
+      
+      var instance;
+      
+      var intervalFixed = mutator.intervalFixed !== false ? true: false;
+      var spawnType = mutator.spawnType;
+      var spawnMutator = mutator.spawnMutator || {};
+      var spawnRate = mutator.spawnRate || 3000;
+      var spawnCount = 0;
+      var spawnPosition = mutator.spawnPosition || "origin";
+      var spawnGroup = mutator.spawnGroup || null;
+      var spawnMax = mutator.spawnMax || 10;
+      var spawnIds = {};
+      var timer = jas.Util.timer(spawnRate, intervalFixed);
+      timer.start();
+      
+      instance.configureSpawn = function (defSpawnType, defSpawnMutator) {
+        spawnType = defSpawnType;
+        spawnMutator = defSpawnMutator;
+      }
+      
+      // returns a function that returns vector
+      function getSpawnStrategy () {
+        var vector = {};
+        if(spawnPosition == "random") {
+          return function () {
+            return instance.getRandomVector( 0, 0, -spawnMutator.w, -spawnMutator.y);  
+          }
+        }
+        else if (spawnPosition == "center") {
+          return function () {
+            return instance.getCenter();
+          }
+        }
+        else {
+          return function () {
+            return instance.getOrigin();  
+          }
+         
+        }
+      }
+      
+      var getSpawnVector = getSpawnStrategy(mutator.spawnPosition) || null;
+      
+      instance.setSpawnPosition = function (position) {
+        spawnPosition = position;
+        getSpawnVector = getSpawnStrategy();  
+      };
+      
+      instance.spawn = (function () {
+        if (spawnCount < spawnMax) {
+          timer.checkTime(function() {
+            var vector = getSpawnVector();
+            spawnMutator.x = vector.x;
+            spawnMutator.y = vector.y;
+            var spawn = jas.Entity.inst(spawnType, spawnMutator);
+            spawnIds[spawn.id] = spawn.id;
+            jas.Entity.addEntity( spawn, spawnGroup);
+            spawnCount++;
+            
+          });
+        }
+      });
+      
+      instance.removeSpawn = function (entity) {
+        delete spawnIds[entity.id];
+        jas.Entity.removeEntityById(entity.id);
+        spawnCount--;
+      };
+      
+      instance.removeSpawnById = function (id) {
+        delete spawnIds[id];
+        jas.Entity.removeEntityById(id);
+        spawnCount--;
+      };
+      
+      return instance;
+    },
     tile: function (mutator) {
       var mutator = mutator? mutator: {};
       
@@ -387,13 +536,12 @@
   }
   
   function addEntity (entity, group) {
-    entity.id = entityAutoId;
+    var id = entity.id;
     if (group) {
       groups[group] = groups[group] || {};
-      groups[group][entityAutoId] = entityAutoId;
+      groups[group][id] = id;
     }
-    entities[entityAutoId] = entity;
-    entityAutoId ++;
+    entities[id] = entity;
     
     return entity;
   }
@@ -404,6 +552,13 @@
       delete groups[i][entity.id]; 
     }
     delete entities[entity.id];
+  }
+  
+  function removeEntityById (id) {
+    for (var i in groups) {
+      delete groups[i][id]; 
+    }
+    delete entities[id];
   }
   
   function getFirst(groupId, callback) {
@@ -438,6 +593,7 @@
     newClass: newClass,
     addEntity: addEntity,
     removeEntity: removeEntity,
+    removeEntityById: removeEntityById,
     enumerateEntity: enumerateEntity,
     getFirst: getFirst,
     getGroup: getGroup,
