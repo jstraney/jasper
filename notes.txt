@@ -3,8 +3,10 @@ NOTES fOR JASPER
 Entity
   * component and widget entity
   * text entity
+  * add various shape classes that extend solid (really just a 'circ' class)
+      - shapes should share an interface of calcArea, getCenter, contains, isColliding
   * spawnzone // maybe an extention of a general 'zone' entity
-  
+  * create a way to read entities from json.
 Util
   * pathfinder
   
