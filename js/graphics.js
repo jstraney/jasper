@@ -1,9 +1,10 @@
 (function (jas) {
   function graphicsFactory (canvas, ctx) {
     function drawRect (draw) {
-      var color = draw.color? draw.color: "#0f0";
-      
+      var color = draw.color? draw.color: "#000";
+            
       ctx.fillStyle = color;
+      ctx.globalAlpha = draw.alpha || 1;
       
       var x = draw.x,
           y = draw.y,
@@ -11,6 +12,7 @@
           h = draw.h;
       
       ctx.fillRect(x, y, w, h);
+      ctx.globalAlpha = 1;
     }
     
     function drawSprite (draw) {
