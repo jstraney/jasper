@@ -200,10 +200,11 @@ var jas = {};
             layer.name = data.layer[i]._name;
             layer.width = data.layer[i]._width;
             layer.height = data.layer[i]._height;
-            layer.tiles = [];
+            layer.entities = [];
             
             // get tiles
             for (var j in data.layer[i].data.tile) {
+              // add logic here to get tile 'properties' from tmx file
               var tile = {};
               tile.tileId = Number(data.layer[i].data.tile[j]._gid);
               if (tile.tileId == 0) {
@@ -213,7 +214,7 @@ var jas = {};
                 tile.tileId--; // start at 0
                 tile.x = (j * map.tileW) % map.w;
                 tile.y = Math.floor((j * map.tileW) / map.w) * map.tileH;
-                layer.tiles.push(tile);
+                layer.entities.push(tile);
               }
             }
             // end layer tiles
@@ -358,6 +359,24 @@ var jas = {};
           return false;
         }
       }
+      
+      instance.getEntityLayer = function (layerId, callback) {
+        var groupLayer;
+        if (instance.layers && instance.layers[layerId]) {
+          groupLayer = instance.layers[layerId];
+          if (typeof(callback) == "function" && groupLayer && groupLayer.entities) {
+            groupLayer.entities.forEach( function(val, index, arr){
+              callback(val, index, arr);
+            });
+          }
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+      }
+      
       instance.id = entityAutoId;
       entityAutoId++;
       instance.x = mutator.x || 0;
@@ -367,35 +386,44 @@ var jas = {};
       
       return instance;
     },
+    // call it a proxy-class if you will. This relays to a different class depending on values in mutator
+    shape : function (mutator) {
+      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): this.rect(mutator);
+      var collideable = mutator.collideable? mutator.collideable: true;
+      instance.setState("collideable", collideable);   // using class entity's FSM 
+      
+      return instance;
+    },
     
-    solid : function (mutator) {
-      var collideable = true;
-      
+    rect: function (mutator) {
       var instance = this.entity(mutator);
+      var color = mutator.color || null;
+      var alpha = mutator.alpha || null;
       
-      instance.setSolid = function (isCollideable) {
-        try {
-          if (typeof (isCollideable) === "boolean") {
-            collideable = isCollideable;
-          } 
-          else {
-            throw "entity set solid requires boolean";
-          }
-        }
-        catch (e) {
-          console.error(e.message);
-        }
+      instance.getOrigin = function () {
+        return {x: instance.x, y: instance.y};
       }
       
-      instance.isCollideable = function () {
-        return collideable;
+      instance.getCenter = function () {
+        var x = instance.x + instance.w / 2;
+        var y = instance.y + instance.h / 2;
+        return {x: x, y : y};
+      };
+      
+      instance.getArea = function () {
+        return instance.w * instance.h; 
       }
       
-      // todo: right now, these two functions treat all solids as rectangles.
-      // relocate these into the 'rect' class, but creat a 'circ' class
-      // that shares the same interface.
+      instance.getRandomVector = function (xShift, yShift, xUpperLimit, yUpperLimit) {
+        xUpperLimit = xUpperLimit || 0;
+        yUpperLimit = yUpperLimit || 0;
+        var ranX = (Math.random() * (instance.w + xUpperLimit)) + instance.x + xShift;
+        var ranY = (Math.random() * (instance.h + yUpperLimit)) + instance.y + yShift;
+        return {x: ranX, y: ranY};
+      };
+      
       instance.isColliding = function (collider, success, failure) {
-        if (this.isCollideable && collider.isCollideable) {
+        if (instance.getState("collideable") && collider.getState("collideable")) {
           // collision vectors
           var v1 = this.x + this.w > collider.x;
           var v2 = this.y + this.h > collider.y;
@@ -428,36 +456,6 @@ var jas = {};
         }
       };
       
-      return instance;
-    },
-    
-    rect: function (mutator) {
-      var instance = this.solid(mutator);
-      var color = mutator.color || null;
-      var alpha = mutator.alpha || null;
-      
-      instance.getOrigin = function () {
-        return {x: instance.x, y: instance.y};
-      }
-      
-      instance.getCenter = function () {
-        var x = instance.x + instance.w / 2;
-        var y = instance.y + instance.h / 2;
-        return {x: x, y : y};
-      };
-      
-      instance.getArea = function () {
-        return instance.w * instance.h; 
-      }
-      
-      instance.getRandomVector = function (xShift, yShift, xUpperLimit, yUpperLimit) {
-        xUpperLimit = xUpperLimit || 0;
-        yUpperLimit = yUpperLimit || 0;
-        var ranX = (Math.random() * (instance.w + xUpperLimit)) + instance.x + xShift;
-        var ranY = (Math.random() * (instance.h + yUpperLimit)) + instance.y + yShift;
-        return {x: ranX, y: ranY};
-      };
-      
       // a rectangle is a solid that can be drawn like a rectangle.
       instance.getDraw = function () {
         return {
@@ -473,10 +471,41 @@ var jas = {};
       
       return instance;
     },
+    circ: function (mutator) {
+      mutator = mutator || {};
+      var instance = this.entity(mutator);
+      
+      var area = Math.pi * Math.pow(instance.w / 2, 2);
+      
+      // more methods to add here. use the same names from the rect class.
+      instance.getDraw = function () {
+        return { 
+          type: "circ",
+          x: this.x,
+          y: this.y,
+          w: this.w,
+          h: this.h,
+          color: color,
+          alpha: alpha
+        };
+      }
+      
+      instance.getArea = function () {
+        return area
+      }
+      
+      instance.getCenter = function () {
+        var x = instance.x + instance.w / 2;
+        var y = instance.y + instance.h / 2;
+        return {x: x, y : y};
+      }
+      
+      return instance;
+    },
     // todo: make a GUI component class
     component: function (mutator) {
       var mutator = mutator || {};
-      var instance = this.rect(mutator);
+      var instance = this.shape(mutator);
       var parent;
       // a widget will be a component that contains components
       function widget () {
@@ -491,9 +520,18 @@ var jas = {};
         
       }
       
+      return instance;
+    },
+    label : function (mutator) {
+      mutator = mutator || {};
+      instance = this.component(mutator);
+      var text = mutator.text;
+      
+      return instance;
+      
     },
     sprite : function (mutator) {
-      var instance = this.solid(mutator);
+      var instance = this.shape(mutator);
       
       function animationFactory(animMutator) {
         // inner frame class
@@ -691,7 +729,7 @@ var jas = {};
       var mutator = mutator || {};
       mutator.alpha = mutator.alpha || .4; // set transparency for testing/rendering
       
-      var instance;
+      var instance = this.shape(mutator);
       
       var intervalFixed = mutator.intervalFixed !== false ? true: false;
       var spawnType = mutator.spawnType;
@@ -767,6 +805,7 @@ var jas = {};
       
       return instance;
     },
+    
     tile: function (mutator) {
       var mutator = mutator? mutator: {};
       
@@ -782,7 +821,7 @@ var jas = {};
       // everything in this mutator is sanitized of underscores.
       // this is the parsed map data.
       mutator = mutator? mutator : {};
-      var instance = this.solid(mutator);
+      var instance = this.rect(mutator);
       
       var tileMutators = {};
       instance.layers = {};
@@ -798,10 +837,10 @@ var jas = {};
       instance.makeTiles = function () {
         for (var i in mutator.layers) {
           var layer = {};
-          layer.tiles = [];
+          layer.entities = [];
           
-          for (var j in mutator.layers[i].tiles) {
-            var tileData = mutator.layers[i].tiles[j];
+          for (var j in mutator.layers[i].entities) {
+            var tileData = mutator.layers[i].entities[j];
             var tileMutator = tileMutators[tileData.tileId] ?
               tileMutators[tileData.tileId]: function (obj) {return obj;};
             //console.log(tileData);
@@ -818,7 +857,7 @@ var jas = {};
             
             // remove first four arguments...
             var tile = classes.tile(tileData);
-            layer.tiles.push(tile);
+            layer.entities.push(tile);
           }
           instance.layers[mutator.layers[i].name] = layer;
           
@@ -830,8 +869,8 @@ var jas = {};
       instance.getDraw = function (layer) {
         if (instance.layers[layer]) {
           return {
-            type: "mapLayer",
-            tiles: instance.layers[layer].tiles
+            type: "complex",
+            layers: instance.layers[layer].tiles
           };
         }
         else {
@@ -853,6 +892,7 @@ var jas = {};
   // ENTITY FACTORY PUBLIC INTERFACE
   function inst (type, mutator) {
     var newInstance = classes[type]? classes[type](mutator):{};
+    
     return newInstance;
   }
   
@@ -1019,7 +1059,7 @@ var jas = {};
 (function (jas) {
   function graphicsFactory (canvas, ctx) {
     function drawRect (draw) {
-      var color = draw.color? draw.color: "#000";
+      var color = draw.color || "#000";
             
       ctx.fillStyle = color;
       ctx.globalAlpha = draw.alpha || 1;
@@ -1031,6 +1071,30 @@ var jas = {};
       
       ctx.fillRect(x, y, w, h);
       ctx.globalAlpha = 1;
+    }
+    
+    function drawCirc (draw) {
+      var color = draw.color || "#000";
+            
+      ctx.fillStyle = color;
+      ctx.globalAlpha = draw.alpha || 1;
+      var x = draw.x + (draw.w/2);
+      var y = draw.y + (draw.h/2);
+      
+      ctx.beginPath();
+      ctx.arc(x, y, 50, 0, 2*Math.PI);
+      ctx.fill();
+    }
+    
+    // eventually save rendered text as an image in a buffer.
+    // rendering text is HIGHLY inefficient for canvas.
+    function drawText (draw) {
+      var x = draw.x;
+      var y = draw.y;
+      var string = draw.string;
+      ctx.fillStyle = draw.color || "#fff";
+      ctx.font = draw.font || "1em serif";
+      ctx.fillText(x, y, string);
     }
     
     function drawSprite (draw) {
@@ -1045,49 +1109,63 @@ var jas = {};
           dy = draw.y,
           dw = draw.w,
           dh = draw.h;
-  
+      
+
       if (image) {
         ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
       }
     }
     
-    function renderMapLayer (mapId, layer) {
-      var map = jas.Entity.getMap(mapId);
-      
-      if (!map) {
-        return;
+    
+    function drawComplex (draw) {
+      // used to draw composite entities (e.g. maps made of tiles. sprites with layers)
+      for (var i in draw.layers) {
+        var layer = draw.layers[i];
+        iterateDrawGroup(layer);
       }
-      else {
-        //console.log(map);
-        // get the map's render instructions
-        var draw = map.getDraw(layer);
+    }
+ 
+    function renderGroup (groupId) {
+      var group = jas.Entity.getGroup(groupId);
+      iterateDrawGroup(group);
+    }
+    
+    function renderGroupLayer (groupId, layerId) {
+      jas.Entity.getFirst(groupId, function (instance) {
+        iterateDrawGroup(instance.layers[layerId].entities);
+      });
+    }
+    
+    function iterateDrawGroup (group) {
+      
+      for (var i in group) {
+        
+        var instance = group[i];
+        
+        var draw = instance.getDraw? instance.getDraw(): false;
         if (!draw) {
-          return;
-        }
-        // get each tiles render instructions. Draw those tiles
-        for (var i in draw.tiles) {
           
-          drawSprite(draw.tiles[i].getDraw());
+          continue;  
         }
+        
+        chooseDraw(draw);
       }
     }
     
-    function renderGroup (groupId) {
-      var group = jas.Entity.getGroup(groupId);
-      
-      for (var i in group) {
-        var instance = group[i];
-        var draw = instance.getDraw();
-        
-        //console.log(draw.type);
-        switch (draw.type) {
-          case "rect":
-              drawRect(draw);
-            break;
-          case "sprite":
-              drawSprite(draw);
-            break;
-        }
+    function chooseDraw(draw) {
+      switch (draw.type) {
+        case "rect":
+          drawRect(draw);
+          break;
+        case "circ":
+          drawCirc(draw);
+          break;
+        case "sprite":
+          drawSprite(draw);
+          break;
+        case "complex":
+          drawComplex(draw);
+          break;
       }
     }
     
@@ -1098,8 +1176,8 @@ var jas = {};
     }
     
     return {
-      renderMapLayer: renderMapLayer ,
       renderGroup: renderGroup,
+      renderGroupLayer: renderGroupLayer,
       fillScreen: fillScreen 
     }
   };

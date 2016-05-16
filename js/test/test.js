@@ -35,7 +35,7 @@ jas.State.addState("main",
     
     jas.Event.addPublication("pickUpFruit");
     
-    jas.Asset.newImage("cherry", "res/images/cherry.png", function () {
+    jas.Asset.newImage("fruit", "res/images/fruit.png", function () {
       jas.Entity.newClass("fruit", function (mutator) {
         mutator = mutator || {};
         mutator.w = 32;
@@ -54,20 +54,25 @@ jas.State.addState("main",
       
       jas.Entity.newClass("cherry", function (mutator) {
         mutator.points = 20;
-        mutator.imageId = "cherry";
+        mutator.imageId = "fruit";
         var instance = this.fruit(mutator);
+        return instance;
       });
       
-      jas.Entity.newClass("cherry", function (mutator) {
-        mutator.points = 20;
-        mutator.imageId = "cherry";
+      jas.Entity.newClass("strawberry", function (mutator) {
+        mutator.points = 80;
+        mutator.imageId = "fruit";
+        mutator.animations = [{name: "still", start: 1, stop: 2, def: true}];
         var instance = this.fruit(mutator);
+        return instance;
       });
       
-      jas.Entity.newClass("cherry", function (mutator) {
-        mutator.points = 20;
-        mutator.imageId = "cherry";
+      jas.Entity.newClass("watermellon", function (mutator) {
+        mutator.points = 160;
+        mutator.imageId = "fruit";
+        mutator.animations = [{name: "still", start: 18, stop: 19, def: true}];
         var instance = this.fruit(mutator);
+        return instance;
       });
       
       var fruitSpawnZone = jas.Entity.inst("spawnZone", {
@@ -87,6 +92,7 @@ jas.State.addState("main",
         fruitSpawnZone.removeSpawnById(fruit.id);
         console.log(fruit.points + " points!!!");
       });
+      
       
       jas.Entity.addEntity( fruitSpawnZone, "spawnZones");
       
@@ -115,24 +121,23 @@ jas.State.addState("main",
     var keys = Controller.keys;
     var p,
         map,
-        cherySpawn,
         cherries;
         
     var walls, activeTiles;
     
-    jas.Entity.getFirst("spawnZones", function (e) {
-      cherrySpawn = e;
+    jas.Entity.getFirst("spawnZones", function (cherrySpawn) {
       cherrySpawn.spawn();
     });
     
     if (map = jas.Entity.getMap("map")) {
       walls = map.layers.walls.tiles;
       activeTiles = map.layers.active_tiles.tiles;
+      
     }
     
     // get and update player
-    jas.Entity.getFirst("player", function (e) {
-      p = e;
+    jas.Entity.getFirst("player", function (instance) {
+      p = instance;
       
       p.updateAnim();
       
@@ -171,19 +176,17 @@ jas.State.addState("main",
           p.setAnim("wl");
         });
       }
+
+      jas.Entity.getFirst("map", function (map) {
+        map.getEntityLayer("walls", function (wall) {
+          wall.isColliding(p, function () {
+            p.collide();
+          });
+        });
+      });
       
-      var checkingWalls = true;
-      for (var i in walls) {
-        var wall = walls[i];
-        p.isColliding(wall, function () {
-          p.collide();
-        },
-        function () {
-          
-        })
-      }
       
-      jas.Entity.getGroup("cherries", function(cherry) {
+      jas.Entity.getGroup("fruit", function(cherry) {
         cherry.isColliding(p, function () {
           cherry.pickup();
         });
@@ -194,11 +197,11 @@ jas.State.addState("main",
   
   function render (Graphics) {
     Graphics.fillScreen("#088");
-    Graphics.renderMapLayer("map", "floor");
-    //Graphics.renderMapLayer("map", "active_tiles");
-    Graphics.renderGroup("cherries");
+    
+    Graphics.renderGroupLayer("map", "floor");
+    Graphics.renderGroup("fruit");
     Graphics.renderGroup("player");
-    Graphics.renderMapLayer("map", "walls");
+    Graphics.renderGroupLayer("map", "walls");
     
   }
 );

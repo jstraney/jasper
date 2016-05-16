@@ -43,10 +43,11 @@
             layer.name = data.layer[i]._name;
             layer.width = data.layer[i]._width;
             layer.height = data.layer[i]._height;
-            layer.tiles = [];
+            layer.entities = [];
             
             // get tiles
             for (var j in data.layer[i].data.tile) {
+              // add logic here to get tile 'properties' from tmx file
               var tile = {};
               tile.tileId = Number(data.layer[i].data.tile[j]._gid);
               if (tile.tileId == 0) {
@@ -56,7 +57,7 @@
                 tile.tileId--; // start at 0
                 tile.x = (j * map.tileW) % map.w;
                 tile.y = Math.floor((j * map.tileW) / map.w) * map.tileH;
-                layer.tiles.push(tile);
+                layer.entities.push(tile);
               }
             }
             // end layer tiles
