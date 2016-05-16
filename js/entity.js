@@ -33,6 +33,24 @@
           return false;
         }
       }
+      
+      instance.getEntityLayer = function (layerId, callback) {
+        var groupLayer;
+        if (instance.layers && instance.layers[layerId]) {
+          groupLayer = instance.layers[layerId];
+          if (typeof(callback) == "function" && groupLayer && groupLayer.entities) {
+            groupLayer.entities.forEach( function(val, index, arr){
+              callback(val, index, arr);
+            });
+          }
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+      }
+      
       instance.id = entityAutoId;
       entityAutoId++;
       instance.x = mutator.x || 0;
@@ -42,35 +60,44 @@
       
       return instance;
     },
+    // call it a proxy-class if you will. This relays to a different class depending on values in mutator
+    shape : function (mutator) {
+      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): this.rect(mutator);
+      var collideable = mutator.collideable? mutator.collideable: true;
+      instance.setState("collideable", collideable);   // using class entity's FSM 
+      
+      return instance;
+    },
     
-    solid : function (mutator) {
-      var collideable = true;
-      
+    rect: function (mutator) {
       var instance = this.entity(mutator);
+      var color = mutator.color || null;
+      var alpha = mutator.alpha || null;
       
-      instance.setSolid = function (isCollideable) {
-        try {
-          if (typeof (isCollideable) === "boolean") {
-            collideable = isCollideable;
-          } 
-          else {
-            throw "entity set solid requires boolean";
-          }
-        }
-        catch (e) {
-          console.error(e.message);
-        }
+      instance.getOrigin = function () {
+        return {x: instance.x, y: instance.y};
       }
       
-      instance.isCollideable = function () {
-        return collideable;
+      instance.getCenter = function () {
+        var x = instance.x + instance.w / 2;
+        var y = instance.y + instance.h / 2;
+        return {x: x, y : y};
+      };
+      
+      instance.getArea = function () {
+        return instance.w * instance.h; 
       }
       
-      // todo: right now, these two functions treat all solids as rectangles.
-      // relocate these into the 'rect' class, but creat a 'circ' class
-      // that shares the same interface.
+      instance.getRandomVector = function (xShift, yShift, xUpperLimit, yUpperLimit) {
+        xUpperLimit = xUpperLimit || 0;
+        yUpperLimit = yUpperLimit || 0;
+        var ranX = (Math.random() * (instance.w + xUpperLimit)) + instance.x + xShift;
+        var ranY = (Math.random() * (instance.h + yUpperLimit)) + instance.y + yShift;
+        return {x: ranX, y: ranY};
+      };
+      
       instance.isColliding = function (collider, success, failure) {
-        if (this.isCollideable && collider.isCollideable) {
+        if (instance.getState("collideable") && collider.getState("collideable")) {
           // collision vectors
           var v1 = this.x + this.w > collider.x;
           var v2 = this.y + this.h > collider.y;
@@ -103,36 +130,6 @@
         }
       };
       
-      return instance;
-    },
-    
-    rect: function (mutator) {
-      var instance = this.solid(mutator);
-      var color = mutator.color || null;
-      var alpha = mutator.alpha || null;
-      
-      instance.getOrigin = function () {
-        return {x: instance.x, y: instance.y};
-      }
-      
-      instance.getCenter = function () {
-        var x = instance.x + instance.w / 2;
-        var y = instance.y + instance.h / 2;
-        return {x: x, y : y};
-      };
-      
-      instance.getArea = function () {
-        return instance.w * instance.h; 
-      }
-      
-      instance.getRandomVector = function (xShift, yShift, xUpperLimit, yUpperLimit) {
-        xUpperLimit = xUpperLimit || 0;
-        yUpperLimit = yUpperLimit || 0;
-        var ranX = (Math.random() * (instance.w + xUpperLimit)) + instance.x + xShift;
-        var ranY = (Math.random() * (instance.h + yUpperLimit)) + instance.y + yShift;
-        return {x: ranX, y: ranY};
-      };
-      
       // a rectangle is a solid that can be drawn like a rectangle.
       instance.getDraw = function () {
         return {
@@ -148,10 +145,41 @@
       
       return instance;
     },
+    circ: function (mutator) {
+      mutator = mutator || {};
+      var instance = this.entity(mutator);
+      
+      var area = Math.pi * Math.pow(instance.w / 2, 2);
+      
+      // more methods to add here. use the same names from the rect class.
+      instance.getDraw = function () {
+        return { 
+          type: "circ",
+          x: this.x,
+          y: this.y,
+          w: this.w,
+          h: this.h,
+          color: color,
+          alpha: alpha
+        };
+      }
+      
+      instance.getArea = function () {
+        return area
+      }
+      
+      instance.getCenter = function () {
+        var x = instance.x + instance.w / 2;
+        var y = instance.y + instance.h / 2;
+        return {x: x, y : y};
+      }
+      
+      return instance;
+    },
     // todo: make a GUI component class
     component: function (mutator) {
       var mutator = mutator || {};
-      var instance = this.rect(mutator);
+      var instance = this.shape(mutator);
       var parent;
       // a widget will be a component that contains components
       function widget () {
@@ -166,9 +194,18 @@
         
       }
       
+      return instance;
+    },
+    label : function (mutator) {
+      mutator = mutator || {};
+      instance = this.component(mutator);
+      var text = mutator.text;
+      
+      return instance;
+      
     },
     sprite : function (mutator) {
-      var instance = this.solid(mutator);
+      var instance = this.shape(mutator);
       
       function animationFactory(animMutator) {
         // inner frame class
@@ -366,7 +403,7 @@
       var mutator = mutator || {};
       mutator.alpha = mutator.alpha || .4; // set transparency for testing/rendering
       
-      var instance;
+      var instance = this.shape(mutator);
       
       var intervalFixed = mutator.intervalFixed !== false ? true: false;
       var spawnType = mutator.spawnType;
@@ -442,6 +479,7 @@
       
       return instance;
     },
+    
     tile: function (mutator) {
       var mutator = mutator? mutator: {};
       
@@ -457,7 +495,7 @@
       // everything in this mutator is sanitized of underscores.
       // this is the parsed map data.
       mutator = mutator? mutator : {};
-      var instance = this.solid(mutator);
+      var instance = this.rect(mutator);
       
       var tileMutators = {};
       instance.layers = {};
@@ -473,10 +511,10 @@
       instance.makeTiles = function () {
         for (var i in mutator.layers) {
           var layer = {};
-          layer.tiles = [];
+          layer.entities = [];
           
-          for (var j in mutator.layers[i].tiles) {
-            var tileData = mutator.layers[i].tiles[j];
+          for (var j in mutator.layers[i].entities) {
+            var tileData = mutator.layers[i].entities[j];
             var tileMutator = tileMutators[tileData.tileId] ?
               tileMutators[tileData.tileId]: function (obj) {return obj;};
             //console.log(tileData);
@@ -493,7 +531,7 @@
             
             // remove first four arguments...
             var tile = classes.tile(tileData);
-            layer.tiles.push(tile);
+            layer.entities.push(tile);
           }
           instance.layers[mutator.layers[i].name] = layer;
           
@@ -505,8 +543,8 @@
       instance.getDraw = function (layer) {
         if (instance.layers[layer]) {
           return {
-            type: "mapLayer",
-            tiles: instance.layers[layer].tiles
+            type: "complex",
+            layers: instance.layers[layer].tiles
           };
         }
         else {
@@ -528,6 +566,7 @@
   // ENTITY FACTORY PUBLIC INTERFACE
   function inst (type, mutator) {
     var newInstance = classes[type]? classes[type](mutator):{};
+    
     return newInstance;
   }
   
