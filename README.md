@@ -108,6 +108,8 @@ jas.Entity.newClass("player", function(mutator) {
   instance.saySomething = function () {
     console.log("I have " +  health + " health!");  
   }
+
+  return instance; // important!
 });
 ```
 
