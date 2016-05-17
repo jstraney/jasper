@@ -2,9 +2,9 @@
   function graphicsFactory (canvas, ctx) {
     function drawRect (draw) {
       var color = draw.color || "#000";
-            
+        
       ctx.fillStyle = color;
-      ctx.globalAlpha = draw.alpha || 1;
+      ctx.globalAlpha = draw.alpha != null? draw.alpha: 1;
       
       var x = draw.x,
           y = draw.y,
@@ -34,9 +34,12 @@
       var x = draw.x;
       var y = draw.y;
       var string = draw.string;
+      
+      ctx.globalAlpha = draw.alpha || 1;
       ctx.fillStyle = draw.color || "#fff";
-      ctx.font = draw.font || "1em serif";
-      ctx.fillText(x, y, string);
+      ctx.font = draw.font || "1em arial";
+      ctx.fillText(string, x, y);
+      ctx.globalAlpha = 1;
     }
     
     function drawSprite (draw) {
@@ -63,10 +66,11 @@
       // used to draw composite entities (e.g. maps made of tiles. sprites with layers)
       for (var i in draw.layers) {
         var layer = draw.layers[i];
-        iterateDrawGroup(layer);
+        //console.log(layer);
+        iterateDrawGroup(layer.entities);
       }
     }
- 
+    
     function renderGroup (groupId) {
       var group = jas.Entity.getGroup(groupId);
       iterateDrawGroup(group);
@@ -81,16 +85,16 @@
     function iterateDrawGroup (group) {
       
       for (var i in group) {
-        
         var instance = group[i];
         
         var draw = instance.getDraw? instance.getDraw(): false;
+        
         if (!draw) {
-          
           continue;  
         }
-        
-        chooseDraw(draw);
+        else {
+          chooseDraw(draw);  
+        }
       }
     }
     
@@ -104,6 +108,9 @@
           break;
         case "sprite":
           drawSprite(draw);
+          break;
+        case "text":
+          drawText(draw);
           break;
         case "complex":
           drawComplex(draw);
