@@ -360,23 +360,6 @@ var jas = {};
         }
       }
       
-      instance.getEntityLayer = function (layerId, callback) {
-        var groupLayer;
-        if (instance.layers && instance.layers[layerId]) {
-          groupLayer = instance.layers[layerId];
-          if (typeof(callback) == "function" && groupLayer && groupLayer.entities) {
-            groupLayer.entities.forEach( function(val, index, arr){
-              callback(val, index, arr);
-            });
-          }
-          return true;
-        }
-        else
-        {
-          return false;
-        }
-      }
-      
       instance.id = entityAutoId;
       entityAutoId++;
       instance.x = mutator.x || 0;
@@ -388,7 +371,8 @@ var jas = {};
     },
     // call it a proxy-class if you will. This relays to a different class depending on values in mutator
     shape : function (mutator) {
-      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): this.rect(mutator);
+      
+      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
       var collideable = mutator.collideable? mutator.collideable: true;
       instance.setState("collideable", collideable);   // using class entity's FSM 
       
@@ -398,7 +382,7 @@ var jas = {};
     rect: function (mutator) {
       var instance = this.entity(mutator);
       var color = mutator.color || null;
-      var alpha = mutator.alpha || null;
+      var alpha = mutator.alpha != null? mutator.alpha: null;
       
       instance.getOrigin = function () {
         return {x: instance.x, y: instance.y};
@@ -522,13 +506,91 @@ var jas = {};
       
       return instance;
     },
-    label : function (mutator) {
+    text: function (mutator) {
       mutator = mutator || {};
-      instance = this.component(mutator);
-      var text = mutator.text;
+      var color = mutator.color || "#fff";
+      var alpha = mutator.color || 1;
+      var font = mutator.font || "1em arial";
+      var string = mutator.string;
+      var instance = classes.entity(mutator);
+      
+      instance.changeText = function (callback) {
+        if ( typeof(callback) == "function") {
+          string = callback(string);
+        }
+      }
+
+      instance.getDraw = function () {
+        return {
+          type: "text",
+          x: instance.x,
+          y: instance.y,
+          string: string,
+          color: color,
+          alpha: alpha,
+          font: font
+        };
+      };
       
       return instance;
+    },
+    label : function (mutator) {
+      mutator = mutator || {};
+      var instance = classes.entity(mutator);
       
+      var textMutator = mutator.text || {};
+      
+      var x = mutator.x;
+      var y = mutator.y;
+      var w = mutator.w;
+      var h = mutator.h;
+      
+      var text = classes.text({
+        string: mutator.string,
+        x: x + 5,
+        y: y + 5,
+        w: w,
+        h: h,
+        color: mutator.textColor,
+        alpha: mutator.textAlpha  
+      });
+      
+      //var frame = classes.rect(mutator.frame);
+      var shapeMutator = mutator.shape || {};
+      var shapeType = shapeMutator.type || "rect";
+
+      var container = classes.rect({
+        x: x,
+        y: y,
+        w: w,
+        h: h,
+        color: mutator.shapeColor,
+        alpha: mutator.shapeAlpha  
+      });
+      
+      //console.log(container);
+      
+      instance.layers = {
+        container: {
+          entities: [container]
+        },
+        text: {
+          entities: [text]
+        }
+      };
+      
+      instance.getDraw = function () {
+        return {
+          type: "complex",
+          layers: instance.layers
+        };
+      }
+      
+      instance.changeLabelText = function (callback) {
+        instance.layers.text.entities[0].changeText(callback); // lazy
+      }
+      
+      return instance;
     },
     sprite : function (mutator) {
       var instance = this.shape(mutator);
@@ -721,6 +783,7 @@ var jas = {};
           
         }
       };
+      
       // end locomotive methods
       
       return instance;
@@ -740,6 +803,7 @@ var jas = {};
       var spawnGroup = mutator.spawnGroup || null;
       var spawnMax = mutator.spawnMax || 10;
       var spawnIds = {};
+      
       var timer = jas.Util.timer(spawnRate, intervalFixed);
       timer.start();
       
@@ -753,7 +817,7 @@ var jas = {};
         var vector = {};
         if(spawnPosition == "random") {
           return function () {
-            return instance.getRandomVector( 0, 0, -spawnMutator.w, -spawnMutator.y);  
+            return instance.getRandomVector( 0, 0, -spawnMutator.w, -spawnMutator.h);  
           }
         }
         else if (spawnPosition == "center") {
@@ -870,13 +934,30 @@ var jas = {};
         if (instance.layers[layer]) {
           return {
             type: "complex",
-            layers: instance.layers[layer].tiles
+            layers: instance.layers[layer].entities
           };
         }
         else {
           return false;
         }
       };
+      
+      instance.getLayer = function (layerId, callback) {
+        var groupLayer;
+        if (instance.layers && instance.layers[layerId]) {
+          groupLayer = instance.layers[layerId];
+          if (typeof(callback) == "function" && groupLayer && groupLayer.entities) {
+            groupLayer.entities.forEach( function(val, index, arr) {
+              callback(val, index, arr);
+            });
+          }
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+      }
       
       return instance;
     }
@@ -1060,9 +1141,9 @@ var jas = {};
   function graphicsFactory (canvas, ctx) {
     function drawRect (draw) {
       var color = draw.color || "#000";
-            
+        
       ctx.fillStyle = color;
-      ctx.globalAlpha = draw.alpha || 1;
+      ctx.globalAlpha = draw.alpha != null? draw.alpha: 1;
       
       var x = draw.x,
           y = draw.y,
@@ -1092,9 +1173,12 @@ var jas = {};
       var x = draw.x;
       var y = draw.y;
       var string = draw.string;
+      
+      ctx.globalAlpha = draw.alpha || 1;
       ctx.fillStyle = draw.color || "#fff";
-      ctx.font = draw.font || "1em serif";
-      ctx.fillText(x, y, string);
+      ctx.font = draw.font || "1em arial";
+      ctx.fillText(string, x, y);
+      ctx.globalAlpha = 1;
     }
     
     function drawSprite (draw) {
@@ -1121,10 +1205,11 @@ var jas = {};
       // used to draw composite entities (e.g. maps made of tiles. sprites with layers)
       for (var i in draw.layers) {
         var layer = draw.layers[i];
-        iterateDrawGroup(layer);
+        //console.log(layer);
+        iterateDrawGroup(layer.entities);
       }
     }
- 
+    
     function renderGroup (groupId) {
       var group = jas.Entity.getGroup(groupId);
       iterateDrawGroup(group);
@@ -1139,16 +1224,16 @@ var jas = {};
     function iterateDrawGroup (group) {
       
       for (var i in group) {
-        
         var instance = group[i];
         
         var draw = instance.getDraw? instance.getDraw(): false;
+        
         if (!draw) {
-          
           continue;  
         }
-        
-        chooseDraw(draw);
+        else {
+          chooseDraw(draw);  
+        }
       }
     }
     
@@ -1162,6 +1247,9 @@ var jas = {};
           break;
         case "sprite":
           drawSprite(draw);
+          break;
+        case "text":
+          drawText(draw);
           break;
         case "complex":
           drawComplex(draw);

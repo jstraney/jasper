@@ -35,6 +35,7 @@ jas.State.addState("main",
     
     jas.Event.addPublication("pickUpFruit");
     
+
     jas.Asset.newImage("fruit", "res/images/fruit.png", function () {
       jas.Entity.newClass("fruit", function (mutator) {
         mutator = mutator || {};
@@ -88,20 +89,62 @@ jas.State.addState("main",
         spawnGroup: "fruit"
       });
       
-      jas.Event.subscribe("pickUpFruit", "fruitSpawnZone", function (fruit) {
-        fruitSpawnZone.removeSpawnById(fruit.id);
-        console.log(fruit.points + " points!!!");
+      jas.Event.subscribe("pickUpFruit", "addScore", function (fruit) {
+        scoreBoard.addScore(fruit.points);
+      });
+      
+      jas.Event.subscribe("pickUpFruit", "removeFruit", function (fruit) {
+        fruitSpawnZone.removeSpawnById(fruit.id); 
       });
       
       
       jas.Entity.addEntity( fruitSpawnZone, "spawnZones");
       
+      jas.Entity.newClass("score", function (mutator) {
+        mutator = mutator || {};
+        var score = 0;
+        mutator.string = mutator.string || "score: " + score;
+        var instance = this.label(mutator); // extend label class
+        
+        instance.getScore = function () {
+          return score;
+        }
+        
+        instance.addScore = function (val) {
+          score += val;
+          console.log(score);
+          if (score > 100 && score <= 300) {
+            fruitSpawnZone.configureSpawn("strawberry", {w:32, h:32}); 
+          }
+          else if (score > 300) {
+            fruitSpawnZone.configureSpawn("watermellon", {w:32, h:32});
+            
+          }
+          // change text is from label
+          instance.changeLabelText(function (oldString) {
+            // you could manipulate oldString if you wanted to
+            return "score: " + score; // return the new one
+          });
+        };
+        
+        return instance;
+      });
+      
+      var scoreBoard = jas.Entity.inst("score", {
+        x: 15,
+        y: 15,
+        w: 50,
+        h: 30,
+        shapeColor: "#fff",
+        shapeAlpha: 0 
+      });
+      
+      jas.Entity.addEntity(scoreBoard, "score");
+      
       
     });
     
-    
-    
-    // get map data
+
     jas.Asset.getMapData("map", "res/data/map-alt.tmx", function (mapData) {
       // when the data is parsed get the image
       jas.Asset.newImage("tiles", "res/images/tileSet.png").then(function(){
@@ -114,6 +157,7 @@ jas.State.addState("main",
       });
     });
     
+    jas.Entity.addEntity(jas.Entity.inst("rect", {x: 40, y: 40, w:50, h:50, color: "#ff0"}), "test");
     
   },
   
@@ -178,7 +222,7 @@ jas.State.addState("main",
       }
 
       jas.Entity.getFirst("map", function (map) {
-        map.getEntityLayer("walls", function (wall) {
+        map.getLayer("walls", function (wall) {
           wall.isColliding(p, function () {
             p.collide();
           });
@@ -196,13 +240,13 @@ jas.State.addState("main",
   },
   
   function render (Graphics) {
-    Graphics.fillScreen("#088");
+    //Graphics.fillScreen("#088");
     
     Graphics.renderGroupLayer("map", "floor");
     Graphics.renderGroup("fruit");
     Graphics.renderGroup("player");
     Graphics.renderGroupLayer("map", "walls");
-    
+    Graphics.renderGroup("score");
   }
 );
 
