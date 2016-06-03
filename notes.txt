@@ -1,12 +1,13 @@
 NOTES fOR JASPER
 
 Entity
-  * component and widget entity
-  * text entity
-  * add various shape classes that extend solid (really just a 'circ' class)
+  * Improve component and widget class
+      - give component some kind of 'repack' method.
+      - components should have layer entities that fit into rows.
+      - once it's improved, make text label extend 'component'
+  * add various shape classes that extend shape (really just a 'circ' class)
       - shapes should share an interface of calcArea, getCenter, contains, isColliding
       - shapes class is doing some weird recursive thing...
-  * spawnzone // maybe an extention of a general 'zone' entity
   * create a way to read entities from json.
   
 Util
@@ -14,11 +15,17 @@ Util
   
 Init
   
+  
 Event
+  
   
 Asset
   * create audio asset
+  * create an assetLoader?
+    - would check if assets are loaded and then fire a callback like 'changeGameState' or w/e
+  
 State
+  
   
 Graphics
   * extra fancy webGL things

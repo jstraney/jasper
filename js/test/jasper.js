@@ -167,109 +167,111 @@ var jas = {};
   function getMapData(name, path, userCallback) {
     var map = {}; 
     
-    return new Promise(function(success, error) {
-      var request = new XMLHttpRequest();
-      var data = {};
-      
-      request.onreadystatechange = function () {
-        if (request.readyState == 2) {
-          assets.maps[name] = false;
-        }
+    
+    var request = new XMLHttpRequest();
+    var data = {};
+    
+    request.onreadystatechange = function () {
+      var waiting = request.readyState == 2;
+      if (waiting) {
+        assets.maps[name] = false;
       }
       
-      request.onload = function () {
-        if (request.status == 200) {
-          
-          /* global X2JS */
-          var x2js = new X2JS();
-          
-          data = x2js.xml_str2json(request.responseText).map;
-          map.tileX = Number(data._height);
-          map.tileY = Number(data._width);
-          map.tileW = Number(data._tilewidth);
-          map.tileH = Number(data._tileheight);
-          map.x = 0;
-          map.y = 0;
-          map.w = map.tileX * map.tileW;
-          map.h = map.tileX * map.tileH;
-          
-          // get layer data
-          map.layers = {};
-          for (var i in data.layer) {
-            var layer = {};
-            layer.name = data.layer[i]._name;
-            layer.width = data.layer[i]._width;
-            layer.height = data.layer[i]._height;
-            layer.entities = [];
-            
-            // get tiles
-            for (var j in data.layer[i].data.tile) {
-              // add logic here to get tile 'properties' from tmx file
-              var tile = {};
-              tile.tileId = Number(data.layer[i].data.tile[j]._gid);
-              if (tile.tileId == 0) {
-                continue; // don't include 'null' tiles
-              }
-              else {
-                tile.tileId--; // start at 0
-                tile.x = (j * map.tileW) % map.w;
-                tile.y = Math.floor((j * map.tileW) / map.w) * map.tileH;
-                layer.entities.push(tile);
-              }
-            }
-            // end layer tiles
-            
-            // get layer properties
-            layer.properties = {};
-            for (var k in data.layer[i].properties) {
-              var property = data.layer[i].properties[k];
-              layer.properties[property._name] = property._value;
-            }
-            map.layers[layer.name] = layer;
-          
-          }
-          // end iteration of layers
-        }
+
+    }
+    
+    request.onload = function () {
+      if (request.status == 200) {
         
-        success(map);
-      };
-      
-      request.onerror = function () {
-        console.error("error finding tmx file in newMap");
-      };
-      
-      request.open("get", path, true);
-      
-      request.send();
-      
-    }).then(function () {
+        /* global X2JS */
+        var x2js = new X2JS();
+        
+        data = x2js.xml_str2json(request.responseText).map;
+        map.tileX = Number(data._height);
+        map.tileY = Number(data._width);
+        map.tileW = Number(data._tilewidth);
+        map.tileH = Number(data._tileheight);
+        map.x = 0;
+        map.y = 0;
+        map.w = map.tileX * map.tileW;
+        map.h = map.tileX * map.tileH;
+        
+        // get layer data
+        map.layers = {};
+        for (var i in data.layer) {
+          var layer = {};
+          layer.name = data.layer[i]._name;
+          layer.width = data.layer[i]._width;
+          layer.height = data.layer[i]._height;
+          layer.entities = [];
+          
+          // get tiles
+          for (var j in data.layer[i].data.tile) {
+            // add logic here to get tile 'properties' from tmx file
+            var tile = {};
+            tile.tileId = Number(data.layer[i].data.tile[j]._gid);
+            if (tile.tileId == 0) {
+              continue; // don't include 'null' tiles
+            }
+            else {
+              tile.tileId--; // start at 0
+              tile.x = (j * map.tileW) % map.w;
+              tile.y = Math.floor((j * map.tileW) / map.w) * map.tileH;
+              layer.entities.push(tile);
+            }
+          }
+          // end layer tiles
+          
+          // get layer properties
+          layer.properties = {};
+          for (var k in data.layer[i].properties) {
+            var property = data.layer[i].properties[k];
+            layer.properties[property._name] = property._value;
+          }
+          map.layers[layer.name] = layer;
+        
+        }
+        // end iteration of layers
+      }
       
       if (typeof(userCallback) == "function") {
-        userCallback(map);
+          userCallback(map);
       }
+      
       assets.maps[name] = map;
-    });
+
+    };
+    
+    request.onerror = function () {
+      console.error("error finding tmx file in newMap");
+    };
+    
+    request.open("get", path, true);
+    
+    request.send();
+    
       
   }
 
   function newImage(name, path, userCallback) {
     var image = new Image();
     
-    return new Promise(function (success, failure) {
-      assets.images[name] = false;
-      /*global Image*/
     
-      image.onload = function () {
-        assets.images[name] = image;
-        success(image);
-        if (typeof(userCallback) == "function") {
-          userCallback(image);
-        }
-      };
+    assets.images[name] = false;
+    /*global Image*/
+    console.log(path);
+    image.onload = function () {
+      assets.images[name] = image;
+      if (typeof(userCallback) == "function") {
+        userCallback(image);
+      }
+    };
     
-      image.src = path;
-      
-    });
+    image.onerror = function (e) {
+      console.log(e);
+    };
+  
+    image.src = path;
   
   }
   
@@ -337,13 +339,14 @@ var jas = {};
       var instance = {};
       mutator = mutator || {};
       var fst = jas.Util.finiteStateMachine();
+      
       instance.setState = function (state, status) {
         fst.setState(state, status);
-      }
+      };
       
       instance.getState = function (state) {
         return fst.getState(state);
-      }
+      };
       
       instance.checkStatus = function (state, status, statusTrue, statusFalse) {
         if (fst.checkStatus(state, status)) {
@@ -358,7 +361,7 @@ var jas = {};
           }
           return false;
         }
-      }
+      };
       
       instance.id = entityAutoId;
       entityAutoId++;
@@ -369,16 +372,6 @@ var jas = {};
       
       return instance;
     },
-    // call it a proxy-class if you will. This relays to a different class depending on values in mutator
-    shape : function (mutator) {
-      
-      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
-      var collideable = mutator.collideable? mutator.collideable: true;
-      instance.setState("collideable", collideable);   // using class entity's FSM 
-      
-      return instance;
-    },
-    
     rect: function (mutator) {
       var instance = this.entity(mutator);
       var color = mutator.color || null;
@@ -386,7 +379,7 @@ var jas = {};
       
       instance.getOrigin = function () {
         return {x: instance.x, y: instance.y};
-      }
+      };
       
       instance.getCenter = function () {
         var x = instance.x + instance.w / 2;
@@ -396,7 +389,7 @@ var jas = {};
       
       instance.getArea = function () {
         return instance.w * instance.h; 
-      }
+      };
       
       instance.getRandomVector = function (xShift, yShift, xUpperLimit, yUpperLimit) {
         xUpperLimit = xUpperLimit || 0;
@@ -422,7 +415,7 @@ var jas = {};
             return false;
           }
         }
-      }
+      };
       
       instance.contains = function (vector, success, failure) {
         var v1 = vector.x > instance.x;
@@ -451,7 +444,7 @@ var jas = {};
           color: color,
           alpha: alpha
         };
-      }
+      };
       
       return instance;
     },
@@ -486,23 +479,137 @@ var jas = {};
       
       return instance;
     },
+    // call it a proxy-class if you will. This relays to a different class depending on values in mutator
+    shape : function (mutator) {
+      
+      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
+      var collideable = mutator.collideable? mutator.collideable: true;
+      instance.setState("collideable", collideable);   // using class entity's FSM 
+      
+      return instance;
+    },
+    composite: function (mutator) {
+      mutator = mutator || {};
+      var instance = classes.shape(mutator);
+      // composite entities store other entities in layers
+      var layers = {};
+      
+      instance.getLayer = function (layerId, callback) {
+        var layer = layers[layerId];
+        if (typeof(callback) == "function" && layer) {
+          callback(layer);
+        }
+        else
+        {
+          return layer;
+        }
+      }
+      
+      instance.addLayer = function (layerId, arr) {
+        var layer = arr || []
+        layers[layerId] = layer;
+      }
+      
+      instance.pushToLayer = function (layerId, entity) {
+        var layer = layers[layerId];
+        layer.push(entity);
+      };
+      
+      return instance;
+      
+    },
     // todo: make a GUI component class
     component: function (mutator) {
       var mutator = mutator || {};
-      var instance = this.shape(mutator);
+      var instance = classes.composite(mutator);
+      
       var parent;
       // a widget will be a component that contains components
-      function widget () {
-        var components = {};
-        instance.addComponent = function (component) {
+      
+      
+      return instance;
+    },
+    widget: function (mutator) {
+      mutator = mutator || {};
+      mutator.shape = mutator.shape || "rect";
+      var instance = classes.component(mutator);
+      var padding = mutator.padding || 5;
+            
+      
+      var rows = [];
+      instance.addRow = function (callback) {
+        function rowFactory () {
+          var row = [];
+          row.w = 0;
+          row.h = 0;
+          row.addEntity = function (entity) {
+            row.push(entity.id);
+          };
+          row.getEntityDimensions = function (col) {
+            var dimensions = {};
+            var entity = entities[row[col]];
+            dimensions.w = entity.w;
+            dimensions.h = entity.h;
+            return dimensions;
+          };
           
-        };
+          return row;
+        }
         
-        instance.removeComponent = function () {
-          
-        };
+        var row = rowFactory();
+        rows.push(row);
+        if (typeof(callback) == "function") {
+          callback(row);
+        }
+      };
+      
+      instance.pack = function () {
+        // minimum size for parent container
+        function fillWidget () {
+          var maxW = 0;
+          var maxH = 0;
+          for (var i in rows) {
+            var row = rows[i];
+            row.w = 0; // reset these things
+            row.h = 0;
+            row.col = 0;
+            for (var j in row) {
+              row.col++; // calculate row
+              var entity = row[j];
+              row.w += entity.w;
+              row.h = entity.h > row.h? entity.h: row.h;
+            }
+            // apply padding. change widget width and height
+            row.h += (i + 1) * padding;
+            row.w += (row.col + 1) * padding;
+            maxW = row.w > maxW? row.w: maxW;
+            maxH += row.h;
+          }
+          instance.w = maxW;
+          instance.h = maxH;
+        }
         
-      }
+        function placeComponents() {
+          var y = instance.y + padding;
+          for (var i in rows) {
+            var row = rows[i];
+            var x = instance.x + padding;
+            for (var j in row) {
+              var onColNum = 0;
+              var colW = row.col / instance.w;
+              
+              var entityId = row[j];
+              entites[entityId].x = x;
+              entites[entityId].y = y;
+              x = colW * onColNum + padding;
+            }
+            y += row.h + padding;
+          }
+        }
+        
+        fillWidget();
+        placeComponents();
+      };
       
       return instance;
     },
@@ -512,13 +619,15 @@ var jas = {};
       var alpha = mutator.color || 1;
       var font = mutator.font || "1em arial";
       var string = mutator.string;
-      var instance = classes.entity(mutator);
+      var instance = classes.sprite(mutator);
+      
       
       instance.changeText = function (callback) {
         if ( typeof(callback) == "function") {
           string = callback(string);
         }
-      }
+        makeTextImage(); // reset image
+      };
 
       instance.getDraw = function () {
         return {
@@ -532,10 +641,62 @@ var jas = {};
         };
       };
       
+ 
+      // saving text to an image is more efficient than re-rendering text via canvas.
+      function makeTextImage() {
+        var tempCanvas = document.createElement("canvas");
+        tempCanvas.width = 50;
+        tempCanvas.height = 50;
+        var ctx = tempCanvas.getContext("2d");
+        
+        var dimensions = ctx.measureText(string);
+        tempCanvas.width = dimensions.width;
+        tempCanvas.height = 50;
+        
+        
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = alpha;
+        
+        
+        ctx.fillText(string, 0, 10);
+        var url = tempCanvas.toDataURL();
+
+        //save string as a png in Assets. Once loaded, change draw.
+        jas.Asset.newImage("text-image:"+instance.id, url, function (image) {
+          document.appendChild(image);
+          var draw = {
+            type: "sprite",
+            frame: {
+              sx: 0,
+              sy: 0,
+              sw: tempCanvas.width,
+              sh: tempCanvas.height,
+              x: instance.x,
+              y: instance.y,
+              w: tempCanvas.width,
+              h: tempCanvas.height
+            },
+            imageId: url
+          };
+          console.log(draw);
+          instance.getDraw = function () {
+            
+            
+            return draw;
+          };
+
+        });
+      }
+      
+      makeTextImage();
+      
+      
       return instance;
     },
     label : function (mutator) {
       mutator = mutator || {};
+      
       var instance = classes.entity(mutator);
       
       var textMutator = mutator.text || {};
@@ -547,8 +708,8 @@ var jas = {};
       
       var text = classes.text({
         string: mutator.string,
-        x: x + 5,
-        y: y + 5,
+        x: x,
+        y: y + h,
         w: w,
         h: h,
         color: mutator.textColor,
@@ -569,13 +730,12 @@ var jas = {};
       });
       
       //console.log(container);
-      
       instance.layers = {
-        container: {
-          entities: [container]
-        },
         text: {
           entities: [text]
+        },
+        container: {
+          entities: [container]
         }
       };
       
@@ -585,15 +745,19 @@ var jas = {};
           layers: instance.layers
         };
       }
+      // remove all this layer nonsense once the 'composite' class is fleshed out
+      instance.getLayer = function (layerId) {
+        return instance.layers[layerId].entities;
+      };
       
       instance.changeLabelText = function (callback) {
-        instance.layers.text.entities[0].changeText(callback); // lazy
+        instance.getLayer("text")[0].changeText(callback); // lazy
       }
       
       return instance;
     },
     sprite : function (mutator) {
-      var instance = this.shape(mutator);
+      var instance = this.composite(mutator);
       
       function animationFactory(animMutator) {
         // inner frame class
@@ -657,12 +821,12 @@ var jas = {};
         
         animation.getCurrentFrame = function () {
           return frames[currentFrame];
-        }
+        };
         
         animation.reset = function() {
           currentFrame = 0;
           done = false;
-        }
+        };
         
         if (animMutator.def) {
           instance.anim = animation;
@@ -697,7 +861,7 @@ var jas = {};
       
       instance.setAnim = function (animId) {
         instance.anim = instance.animations[animId];
-      }
+      };
       
       instance.getAnimId = function () {
         return instance.anim.name;
@@ -708,11 +872,11 @@ var jas = {};
         if (animMutator.def) {
           instance.anim = instance.animations[animId];
         }
-      }
+      };
       
       instance.updateAnim = function () {
         instance.anim.update();
-      }
+      };
       
       instance.resetAnim = function (animId) {
         if (animId) {
@@ -721,13 +885,11 @@ var jas = {};
         else {
           instance.anim.reset();
         }
-      }
+      };
       
       // draw functions
       instance.getDraw = function () {
-        
         var frame = instance.anim.getCurrentFrame();
-        
         return {
           type: "sprite",
           frame: frame,
@@ -737,7 +899,8 @@ var jas = {};
           h: this.h,
           imageId: imageId
         };
-      }
+      };
+      
       // locomotive methods
       instance.moveUp = function () {
         dirY = Directions.UP;
@@ -810,7 +973,7 @@ var jas = {};
       instance.configureSpawn = function (defSpawnType, defSpawnMutator) {
         spawnType = defSpawnType;
         spawnMutator = defSpawnMutator;
-      }
+      };
       
       // returns a function that returns vector
       function getSpawnStrategy () {
@@ -896,7 +1059,7 @@ var jas = {};
       
       instance.configureTile = function (tileId, mutatorFunction) {
         tileMutators[tileId] = mutatorFunction;
-      }
+      };
       
       instance.makeTiles = function () {
         for (var i in mutator.layers) {
@@ -941,7 +1104,7 @@ var jas = {};
           return false;
         }
       };
-      
+      // remove all this layer nonsense once the 'composite' class is fleshed out
       instance.getLayer = function (layerId, callback) {
         var groupLayer;
         if (instance.layers && instance.layers[layerId]) {
@@ -957,7 +1120,7 @@ var jas = {};
         {
           return false;
         }
-      }
+      };
       
       return instance;
     }
@@ -1005,6 +1168,10 @@ var jas = {};
       delete groups[i][id]; 
     }
     delete entities[id];
+  }
+  
+  function getEntityById(id) {
+    return entities[id];
   }
   
   function getFirst(groupId, callback) {
@@ -1184,6 +1351,9 @@ var jas = {};
     function drawSprite (draw) {
       var image = jas.Asset.getImage(draw.imageId);
       //console.log(draw);
+
+        //console.log(image);
+      
       var frame = draw.frame,
           sx = frame.sx,
           sy = frame.sy,

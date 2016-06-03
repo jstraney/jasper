@@ -45,6 +45,9 @@
     function drawSprite (draw) {
       var image = jas.Asset.getImage(draw.imageId);
       //console.log(draw);
+
+        //console.log(image);
+      
       var frame = draw.frame,
           sx = frame.sx,
           sy = frame.sy,

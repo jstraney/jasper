@@ -11,13 +11,14 @@
       var instance = {};
       mutator = mutator || {};
       var fst = jas.Util.finiteStateMachine();
+      
       instance.setState = function (state, status) {
         fst.setState(state, status);
-      }
+      };
       
       instance.getState = function (state) {
         return fst.getState(state);
-      }
+      };
       
       instance.checkStatus = function (state, status, statusTrue, statusFalse) {
         if (fst.checkStatus(state, status)) {
@@ -32,7 +33,7 @@
           }
           return false;
         }
-      }
+      };
       
       instance.id = entityAutoId;
       entityAutoId++;
@@ -43,16 +44,6 @@
       
       return instance;
     },
-    // call it a proxy-class if you will. This relays to a different class depending on values in mutator
-    shape : function (mutator) {
-      
-      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
-      var collideable = mutator.collideable? mutator.collideable: true;
-      instance.setState("collideable", collideable);   // using class entity's FSM 
-      
-      return instance;
-    },
-    
     rect: function (mutator) {
       var instance = this.entity(mutator);
       var color = mutator.color || null;
@@ -60,7 +51,7 @@
       
       instance.getOrigin = function () {
         return {x: instance.x, y: instance.y};
-      }
+      };
       
       instance.getCenter = function () {
         var x = instance.x + instance.w / 2;
@@ -70,7 +61,7 @@
       
       instance.getArea = function () {
         return instance.w * instance.h; 
-      }
+      };
       
       instance.getRandomVector = function (xShift, yShift, xUpperLimit, yUpperLimit) {
         xUpperLimit = xUpperLimit || 0;
@@ -96,7 +87,7 @@
             return false;
           }
         }
-      }
+      };
       
       instance.contains = function (vector, success, failure) {
         var v1 = vector.x > instance.x;
@@ -125,7 +116,7 @@
           color: color,
           alpha: alpha
         };
-      }
+      };
       
       return instance;
     },
@@ -160,23 +151,137 @@
       
       return instance;
     },
+    // call it a proxy-class if you will. This relays to a different class depending on values in mutator
+    shape : function (mutator) {
+      
+      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
+      var collideable = mutator.collideable? mutator.collideable: true;
+      instance.setState("collideable", collideable);   // using class entity's FSM 
+      
+      return instance;
+    },
+    composite: function (mutator) {
+      mutator = mutator || {};
+      var instance = classes.shape(mutator);
+      // composite entities store other entities in layers
+      var layers = {};
+      
+      instance.getLayer = function (layerId, callback) {
+        var layer = layers[layerId];
+        if (typeof(callback) == "function" && layer) {
+          callback(layer);
+        }
+        else
+        {
+          return layer;
+        }
+      }
+      
+      instance.addLayer = function (layerId, arr) {
+        var layer = arr || []
+        layers[layerId] = layer;
+      }
+      
+      instance.pushToLayer = function (layerId, entity) {
+        var layer = layers[layerId];
+        layer.push(entity);
+      };
+      
+      return instance;
+      
+    },
     // todo: make a GUI component class
     component: function (mutator) {
       var mutator = mutator || {};
-      var instance = this.shape(mutator);
+      var instance = classes.composite(mutator);
+      
       var parent;
       // a widget will be a component that contains components
-      function widget () {
-        var components = {};
-        instance.addComponent = function (component) {
+      
+      
+      return instance;
+    },
+    widget: function (mutator) {
+      mutator = mutator || {};
+      mutator.shape = mutator.shape || "rect";
+      var instance = classes.component(mutator);
+      var padding = mutator.padding || 5;
+            
+      
+      var rows = [];
+      instance.addRow = function (callback) {
+        function rowFactory () {
+          var row = [];
+          row.w = 0;
+          row.h = 0;
+          row.addEntity = function (entity) {
+            row.push(entity.id);
+          };
+          row.getEntityDimensions = function (col) {
+            var dimensions = {};
+            var entity = entities[row[col]];
+            dimensions.w = entity.w;
+            dimensions.h = entity.h;
+            return dimensions;
+          };
           
-        };
+          return row;
+        }
         
-        instance.removeComponent = function () {
-          
-        };
+        var row = rowFactory();
+        rows.push(row);
+        if (typeof(callback) == "function") {
+          callback(row);
+        }
+      };
+      
+      instance.pack = function () {
+        // minimum size for parent container
+        function fillWidget () {
+          var maxW = 0;
+          var maxH = 0;
+          for (var i in rows) {
+            var row = rows[i];
+            row.w = 0; // reset these things
+            row.h = 0;
+            row.col = 0;
+            for (var j in row) {
+              row.col++; // calculate row
+              var entity = row[j];
+              row.w += entity.w;
+              row.h = entity.h > row.h? entity.h: row.h;
+            }
+            // apply padding. change widget width and height
+            row.h += (i + 1) * padding;
+            row.w += (row.col + 1) * padding;
+            maxW = row.w > maxW? row.w: maxW;
+            maxH += row.h;
+          }
+          instance.w = maxW;
+          instance.h = maxH;
+        }
         
-      }
+        function placeComponents() {
+          var y = instance.y + padding;
+          for (var i in rows) {
+            var row = rows[i];
+            var x = instance.x + padding;
+            for (var j in row) {
+              var onColNum = 0;
+              var colW = row.col / instance.w;
+              
+              var entityId = row[j];
+              entites[entityId].x = x;
+              entites[entityId].y = y;
+              x = colW * onColNum + padding;
+            }
+            y += row.h + padding;
+          }
+        }
+        
+        fillWidget();
+        placeComponents();
+      };
       
       return instance;
     },
@@ -186,13 +291,15 @@
       var alpha = mutator.color || 1;
       var font = mutator.font || "1em arial";
       var string = mutator.string;
-      var instance = classes.entity(mutator);
+      var instance = classes.sprite(mutator);
+      
       
       instance.changeText = function (callback) {
         if ( typeof(callback) == "function") {
           string = callback(string);
         }
-      }
+        makeTextImage(); // reset image
+      };
 
       instance.getDraw = function () {
         return {
@@ -206,10 +313,62 @@
         };
       };
       
+ 
+      // saving text to an image is more efficient than re-rendering text via canvas.
+      function makeTextImage() {
+        var tempCanvas = document.createElement("canvas");
+        tempCanvas.width = 50;
+        tempCanvas.height = 50;
+        var ctx = tempCanvas.getContext("2d");
+        
+        var dimensions = ctx.measureText(string);
+        tempCanvas.width = dimensions.width;
+        tempCanvas.height = 50;
+        
+        
+        ctx.font = font;
+        ctx.fillStyle = color;
+        ctx.globalAlpha = alpha;
+        
+        
+        ctx.fillText(string, 0, 10);
+        var url = tempCanvas.toDataURL();
+
+        //save string as a png in Assets. Once loaded, change draw.
+        jas.Asset.newImage("text-image:"+instance.id, url, function (image) {
+          document.appendChild(image);
+          var draw = {
+            type: "sprite",
+            frame: {
+              sx: 0,
+              sy: 0,
+              sw: tempCanvas.width,
+              sh: tempCanvas.height,
+              x: instance.x,
+              y: instance.y,
+              w: tempCanvas.width,
+              h: tempCanvas.height
+            },
+            imageId: url
+          };
+          console.log(draw);
+          instance.getDraw = function () {
+            
+            
+            return draw;
+          };
+
+        });
+      }
+      
+      makeTextImage();
+      
+      
       return instance;
     },
     label : function (mutator) {
       mutator = mutator || {};
+      
       var instance = classes.entity(mutator);
       
       var textMutator = mutator.text || {};
@@ -221,8 +380,8 @@
       
       var text = classes.text({
         string: mutator.string,
-        x: x + 5,
-        y: y + 5,
+        x: x,
+        y: y + h,
         w: w,
         h: h,
         color: mutator.textColor,
@@ -243,13 +402,12 @@
       });
       
       //console.log(container);
-      
       instance.layers = {
-        container: {
-          entities: [container]
-        },
         text: {
           entities: [text]
+        },
+        container: {
+          entities: [container]
         }
       };
       
@@ -259,15 +417,19 @@
           layers: instance.layers
         };
       }
+      // remove all this layer nonsense once the 'composite' class is fleshed out
+      instance.getLayer = function (layerId) {
+        return instance.layers[layerId].entities;
+      };
       
       instance.changeLabelText = function (callback) {
-        instance.layers.text.entities[0].changeText(callback); // lazy
+        instance.getLayer("text")[0].changeText(callback); // lazy
       }
       
       return instance;
     },
     sprite : function (mutator) {
-      var instance = this.shape(mutator);
+      var instance = this.composite(mutator);
       
       function animationFactory(animMutator) {
         // inner frame class
@@ -331,12 +493,12 @@
         
         animation.getCurrentFrame = function () {
           return frames[currentFrame];
-        }
+        };
         
         animation.reset = function() {
           currentFrame = 0;
           done = false;
-        }
+        };
         
         if (animMutator.def) {
           instance.anim = animation;
@@ -371,7 +533,7 @@
       
       instance.setAnim = function (animId) {
         instance.anim = instance.animations[animId];
-      }
+      };
       
       instance.getAnimId = function () {
         return instance.anim.name;
@@ -382,11 +544,11 @@
         if (animMutator.def) {
           instance.anim = instance.animations[animId];
         }
-      }
+      };
       
       instance.updateAnim = function () {
         instance.anim.update();
-      }
+      };
       
       instance.resetAnim = function (animId) {
         if (animId) {
@@ -395,13 +557,11 @@
         else {
           instance.anim.reset();
         }
-      }
+      };
       
       // draw functions
       instance.getDraw = function () {
-        
         var frame = instance.anim.getCurrentFrame();
-        
         return {
           type: "sprite",
           frame: frame,
@@ -411,7 +571,8 @@
           h: this.h,
           imageId: imageId
         };
-      }
+      };
+      
       // locomotive methods
       instance.moveUp = function () {
         dirY = Directions.UP;
@@ -484,7 +645,7 @@
       instance.configureSpawn = function (defSpawnType, defSpawnMutator) {
         spawnType = defSpawnType;
         spawnMutator = defSpawnMutator;
-      }
+      };
       
       // returns a function that returns vector
       function getSpawnStrategy () {
@@ -570,7 +731,7 @@
       
       instance.configureTile = function (tileId, mutatorFunction) {
         tileMutators[tileId] = mutatorFunction;
-      }
+      };
       
       instance.makeTiles = function () {
         for (var i in mutator.layers) {
@@ -615,7 +776,7 @@
           return false;
         }
       };
-      
+      // remove all this layer nonsense once the 'composite' class is fleshed out
       instance.getLayer = function (layerId, callback) {
         var groupLayer;
         if (instance.layers && instance.layers[layerId]) {
@@ -631,7 +792,7 @@
         {
           return false;
         }
-      }
+      };
       
       return instance;
     }
@@ -679,6 +840,10 @@
       delete groups[i][id]; 
     }
     delete entities[id];
+  }
+  
+  function getEntityById(id) {
+    return entities[id];
   }
   
   function getFirst(groupId, callback) {

@@ -112,7 +112,7 @@ jas.State.addState("main",
         
         instance.addScore = function (val) {
           score += val;
-          console.log(score);
+          
           if (score > 100 && score <= 300) {
             fruitSpawnZone.configureSpawn("strawberry", {w:32, h:32}); 
           }
@@ -135,8 +135,8 @@ jas.State.addState("main",
         y: 15,
         w: 50,
         h: 30,
-        shapeColor: "#fff",
-        shapeAlpha: 0 
+        shapeColor: "#000",
+        shapeAlpha: .5 
       });
       
       jas.Entity.addEntity(scoreBoard, "score");
@@ -147,17 +147,18 @@ jas.State.addState("main",
 
     jas.Asset.getMapData("map", "res/data/map-alt.tmx", function (mapData) {
       // when the data is parsed get the image
-      jas.Asset.newImage("tiles", "res/images/tileSet.png").then(function(){
+      jas.Asset.newImage("tiles", "res/images/tileSet.png", (function(){
         // when the image is done make an entity from the data
         mapData.imageId = "tiles";
+        
         var map = jas.Entity.addEntity(jas.Entity.inst("map", mapData), "map");
-
+        
         // initialize the maps tiles
         map.makeTiles();
-      });
+      }));
     });
     
-    jas.Entity.addEntity(jas.Entity.inst("rect", {x: 40, y: 40, w:50, h:50, color: "#ff0"}), "test");
+    jas.Entity.addEntity(jas.Entity.inst("rect", {x: 40, y: 40, w:50, h:50, color: "#ff0" }), "test");
     
   },
   
@@ -240,13 +241,14 @@ jas.State.addState("main",
   },
   
   function render (Graphics) {
-    //Graphics.fillScreen("#088");
+    Graphics.fillScreen("#088");
     
     Graphics.renderGroupLayer("map", "floor");
     Graphics.renderGroup("fruit");
     Graphics.renderGroup("player");
     Graphics.renderGroupLayer("map", "walls");
     Graphics.renderGroup("score");
+    //Graphics.renderGroup("test");
   }
 );
 
