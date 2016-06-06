@@ -10,7 +10,9 @@
     entity: function (mutator) {
       var instance = {};
       mutator = mutator || {};
+      
       var fst = jas.Util.finiteStateMachine();
+      var controller;
       
       instance.setState = function (state, status) {
         fst.setState(state, status);
@@ -34,6 +36,13 @@
           return false;
         }
       };
+      
+      instance.setController = function (userController) {
+        controller = userController || false;
+        
+      }
+      
+      
       
       instance.id = entityAutoId;
       entityAutoId++;
@@ -121,7 +130,6 @@
       return instance;
     },
     circ: function (mutator) {
-      mutator = mutator || {};
       var instance = this.entity(mutator);
       
       var area = Math.pi * Math.pow(instance.w / 2, 2);
@@ -161,7 +169,6 @@
       return instance;
     },
     composite: function (mutator) {
-      mutator = mutator || {};
       var instance = classes.shape(mutator);
       // composite entities store other entities in layers
       var layers = {};
@@ -192,7 +199,6 @@
     },
     // todo: make a GUI component class
     component: function (mutator) {
-      var mutator = mutator || {};
       var instance = classes.composite(mutator);
       
       var parent;
@@ -202,7 +208,6 @@
       return instance;
     },
     widget: function (mutator) {
-      mutator = mutator || {};
       mutator.shape = mutator.shape || "rect";
       var instance = classes.component(mutator);
       var padding = mutator.padding || 5;
@@ -351,10 +356,8 @@
             },
             imageId: url
           };
-          console.log(draw);
+          
           instance.getDraw = function () {
-            
-            
             return draw;
           };
 

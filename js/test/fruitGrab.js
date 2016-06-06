@@ -9,8 +9,47 @@ jas.State.addState("main",
         instance.spd = mutator.spd? mutator.spd: 2;
         var lastHit = Date.now();
         
+        var spd = 1;
+        
+        var controller = jas.Controller.inst("controller", {
+          "UP_DOWN": function () {
+            instance.setAnim("wu");
+            instance.y -= spd;
+          },
+          "RIGHT_DOWN": function () {
+            instance.setAnim("wr");
+            instance.x += spd;
+          },
+          "DOWN_DOWN": function () {
+            instance.setAnim("wd");
+            instance.y += spd;
+          },
+          "LEFT_DOWN": function () {
+            instance.setAnim("wl");
+            instance.x -= spd;
+          },
+          "UP_UP": function () {
+            if (instance.getAnimId() == "wu")
+              instance.setAnim("su");
+          },
+          "RIGHT_UP": function () {
+            if (instance.getAnimId() == "wr")
+              instance.setAnim("sr");
+          },
+          "DOWN_UP": function () {
+            if (instance.getAnimId() == "wd")
+              instance.setAnim("sd");
+          },
+          "LEFT_UP": function () {
+            if (instance.getAnimId() == "wl")
+              instance.setAnim("sl");
+          }
+        });
+        
         return instance;
       });
+      
+      
       
       // add a new entity of type 'player'
       jas.Entity.addEntity(jas.Entity.inst("player", {
@@ -180,46 +219,19 @@ jas.State.addState("main",
       
     }
     
+    
+    
     // get and update player
     jas.Entity.getFirst("player", function (instance) {
       p = instance;
       
       p.updateAnim();
       
-      if (Controller.keysNotPressed(["UP", "RIGHT", "DOWN", "LEFT"])) {
-        switch(p.getAnimId()) {
-          case "wu":
-            p.setAnim("su");
-            break;
-          case "wr":
-            p.setAnim("sr");
-            break;
-          case "wd":
-            p.setAnim("sd");
-            break;
-          case "wl":
-            p.setAnim("sl");
-            break;
-        }  
-      }
-      else {
-        
-        Controller.isKeyDown("UP", function() {
-          p.moveUp();
-          p.setAnim("wu");
-        });
-        Controller.isKeyDown("RIGHT", function() {
-          p.moveRight();
-          p.setAnim("wr");
-        })
-        Controller.isKeyDown("DOWN", function() {
-          p.moveDown();
-          p.setAnim("wd");
-        });
-        Controller.isKeyDown("LEFT", function() {
-          p.moveLeft();
-          p.setAnim("wl");
-        });
+      if (!Controller.keysNotPressed(["UP", "RIGHT", "DOWN", "LEFT"])) {
+        Controller.isKeyDown("UP");
+        Controller.isKeyDown("RIGHT");
+        Controller.isKeyDown("DOWN");
+        Controller.isKeyDown("LEFT");
       }
 
       jas.Entity.getFirst("map", function (map) {
@@ -247,7 +259,8 @@ jas.State.addState("main",
     Graphics.renderGroup("fruit");
     Graphics.renderGroup("player");
     Graphics.renderGroupLayer("map", "walls");
-    Graphics.renderGroup("score");
+    Graphics.renderGroup("score", "container");
+    Graphics.renderGroupLayer("score", "text");
     //Graphics.renderGroup("test");
   }
 );

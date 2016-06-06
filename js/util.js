@@ -7,6 +7,8 @@
     var timeSet = interval ? true: false;
     var isRandom = isRandom || false;
     
+    
+    
     function start () {
       originalInterval = originalInterval || 0;
       interval = interval || 0;

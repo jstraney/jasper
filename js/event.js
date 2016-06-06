@@ -26,6 +26,7 @@
   
   jas.Event = {
     addPublication: function (name) {
+      console.log(name);
       publications[name] = publication();
     },
     remPublication: function (name) { // careful! destroys subscribers too

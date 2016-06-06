@@ -102,7 +102,7 @@
     
     assets.images[name] = false;
     /*global Image*/
-    console.log(path);
+    
     image.onload = function () {
       assets.images[name] = image;
       if (typeof(userCallback) == "function") {
