@@ -4,6 +4,7 @@ var gulp = require("gulp"),
    uglify = require("gulp-uglify"),
    less = require("gulp-less"),
    min = require("gulp-clean-css"),
+   print = require("gulp-print"),
    postCSS = require("gulp-postcss"),
    autoprefixer = require("autoprefixer"),
    browserSync = require("browser-sync").create(),
@@ -12,9 +13,12 @@ var gulp = require("gulp"),
    
 gulp.task("js", function () {
   return gulp.watch("js/*.js", function () {
-    gulp.src(["js/*.js", "js/lib/x2js-v1.1.5/xml2json.min.js"])
+    
+    // src
+    gulp.src(["js/*.js", "js/lib/lodash/lodash.js", "js/lib/x2js-v1.1.5/xml2json.js"])
       .pipe(order([
-        'xml2json.min.js',
+        "xml2json.js",
+        "lodash.js",
         'jasper.js',
         'util.js',
         'event.js',
@@ -24,19 +28,17 @@ gulp.task("js", function () {
         'graphics.js',
         'state.js',
         'init.js'
-        ]))
+      ]))
       .pipe(plumber())
       .pipe(concat("jasper.js"))
       .pipe(gulp.dest("js/test/"))
       .pipe(gulp.dest("js/dist/"))
-      
-      
-    gulp.src("js/dist/jasper.js")
       .pipe(concat("jasper.min.js"))
-      .pipe(uglify().on('error', gutil.log))
-      .pipe(gulp.dest("js/dist/"))
-      .pipe(gulp.dest("js/test/"));
-  });
+      .pipe(uglify())
+      .pipe(gulp.dest("js/test/"))
+      .pipe(gulp.dest("js/dist/"));
+         
+ }); 
 });
 
 //todo: add a task to use browser-sync for dev purposes
