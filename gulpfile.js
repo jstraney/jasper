@@ -34,6 +34,7 @@ gulp.task("js", function () {
       .pipe(gulp.dest("js/dist/"))
       .pipe(concat("jasper.min.js"))
       .pipe(uglify())
+      .on('error', gutil.log)
       .pipe(gulp.dest("js/test/"))
       .pipe(gulp.dest("js/dist/"));
          

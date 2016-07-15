@@ -568,7 +568,7 @@ function X2JS(config) {
 
 var jas = {};
 (function (jas) {
-  function timer(interval, isRandom) {
+  function timerFactory(interval, isRandom) {
     var then;
     var done;
     var originalInterval = interval || null;
@@ -583,6 +583,10 @@ var jas = {};
       interval = interval || 0;
       timeSet = true;
       then = Date.now();
+    }
+    
+    function getInterval () {
+      return interval;
     }
     
     function contractInterval(amount) {
@@ -614,19 +618,19 @@ var jas = {};
       var now = Date.now();
       
       if (now - then >= interval) {
-        if (typeof(itsTime) == "function") {
-          itsTime();
-        }
-        then = now;
         if (isRandom) {
           setTimer(originalInterval);  
+        }
+        if (typeof(itsTime) == "function") {
+          then = now;
+          return itsTime(now);
         }
         return true;
       }
       else {
         //console.log(getTime());
         if (typeof(notTime) == "function") {
-          notTime();
+          return notTime(now - then);
         }
         
         return false;
@@ -647,6 +651,7 @@ var jas = {};
       stop: stop,
       setTimer: setTimer,
       checkTime: checkTime,
+      getInterval: getInterval,
       getTime: getTime
     }
   }
@@ -666,7 +671,7 @@ var jas = {};
     function checkStatus (state, status) {
       return states[state] == status? true: false;
     }
-    
+        
     return {
       setState: setState,
       getState: getState,
@@ -674,14 +679,71 @@ var jas = {};
     };
   }
   
-  jas.Util = {
-    timer: timer,
-    finiteStateMachine: finiteStateMachine
+  function graphFactory () {
+    // factory that graphs lines and points on lines
+    
+    var classes = {
+      constant: function (y) {
+        return function (x) {
+          return y; // lol
+        };
+      },
+      linear: function (m, b) {
+        return function (x) {
+          return m*x + b;
+        };
+      },
+      exponential: function (b) {
+        return function(x) {
+          return x * x + b;
+        };
+      },
+      quadratic: function (a, b, c) {
+        return function (x) {
+          return (a * x * x) + (b * x) + c;
+        };
+      },
+      logarithmic: function (x) {
+        return function (x) {
+          
+        };
+      }
+    };
+    
+    function inst (type, mutator) {
+      if (typeof(classes[type]) == 'function') {
+        return classes[type](mutator);
+      }
+      else {
+        return false;
+      }
+    }
+  
+    function newClass (type, callback) {
+      if (typeof(callback) == "function") {
+        classes[type] = callback;
+      }
+    }
+    
+    return {
+      inst: inst,
+      newClass: newClass
+    }
   }
+  
+  var Graph = graphFactory();
+  
+  
+  
+  jas.Util = {
+    timer: timerFactory,
+    finiteStateMachine: finiteStateMachine,
+    Graph: Graph
+  };
 })(jas);
 (function (jas) {
   var publications = {};
-
+  var subscriberAutoId = 0;
   function publication () {
     var subscribers = {};
     function subscriber (callback) {
@@ -700,6 +762,7 @@ var jas = {};
         subscribers[subId] = subscriber(callback);
       },
       removeSubscriber: function (subId) {
+        subscribers[subId] = undefined;
         delete subscribers[subId];
       }
     }
@@ -707,20 +770,41 @@ var jas = {};
   
   jas.Event = {
     addPublication: function (name) {
-      console.log(name);
+      //console.log(name);
       publications[name] = publication();
     },
-    remPublication: function (name) { // careful! destroys subscribers too
+    remPublication: function (name) {
+      publications[name] = undefined;
       delete publications[name];
     },
     subscribe: function (pubId, subId, callback) {
-      publications[pubId].addSubscriber(subId, callback);
+      var name;
+      if (arguments.length > 2) {
+        name = subId;
+        publications[pubId].addSubscriber(name, callback);
+      }
+      else if (typeof(subId) == "function") {
+        name = subId.name? subId.name: "sub-" + subscriberAutoId ++;
+        callback = subId;
+        publications[pubId].addSubscriber(name, callback);
+      }
+      console.log(name);
+      // return subscriber
+      return {
+        unsubscribe: function () {
+          console.log(name);
+          publications[pubId].removeSubscriber(name);
+        },
+        resubscribe: function () {
+          publications[pubId].addSubscriber(callback.name, callback);
+        }
+      };
     },
     unsubscribe: function (pubId, subId) {
       publications[pubId].removeSubscriber(subId);
     },
-    publish: function (pubId, event) {
-      publications[pubId].publish(event);
+    publish: function (pubId, payload) {
+      publications[pubId].publish(payload);
     }
   };
   
@@ -939,9 +1023,7 @@ var jas = {};
         controller = userController || false;
         
       }
-      
-      
-      
+
       instance.id = entityAutoId;
       entityAutoId++;
       instance.x = mutator.x || 0;
@@ -1059,8 +1141,8 @@ var jas = {};
     },
     // call it a proxy-class if you will. This relays to a different class depending on values in mutator
     shape : function (mutator) {
-      
-      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
+      var instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
+      instance.shape = mutator.shape;
       var collideable = mutator.collideable? mutator.collideable: true;
       instance.setState("collideable", collideable);   // using class entity's FSM 
       
@@ -1074,11 +1156,19 @@ var jas = {};
       instance.getLayer = function (layerId, callback) {
         var layer = layers[layerId];
         if (typeof(callback) == "function" && layer) {
-          callback(layer);
+          for (var i = 0; i < layer.length; i ++) {
+            callback(layer[i]);
+          }
         }
         else
         {
           return layer;
+        }
+      }
+      
+      instance.addLayers = function (layerMutator) {
+        for (var i in layerMutator) {
+          instance.addLayer(i, layerMutator[i]);
         }
       }
       
@@ -1091,6 +1181,17 @@ var jas = {};
         var layer = layers[layerId];
         layer.push(entity);
       };
+      
+      instance.orderLayers = function () {
+        
+      };
+
+      instance.getDraw = function () {
+        return {
+          type: "complex",
+          layers: instance.layers
+        };
+      }
       
       return instance;
       
@@ -1240,6 +1341,7 @@ var jas = {};
         //save string as a png in Assets. Once loaded, change draw.
         jas.Asset.newImage("text-image:"+instance.id, url, function (image) {
           document.appendChild(image);
+          
           var draw = {
             type: "sprite",
             frame: {
@@ -1270,7 +1372,7 @@ var jas = {};
     label : function (mutator) {
       mutator = mutator || {};
       
-      var instance = classes.entity(mutator);
+      var instance = classes.component(mutator);
       
       var textMutator = mutator.text || {};
       
@@ -1303,29 +1405,15 @@ var jas = {};
       });
       
       //console.log(container);
-      instance.layers = {
-        text: {
-          entities: [text]
-        },
-        container: {
-          entities: [container]
-        }
-      };
+      instance.addLayers({
+        text: [text],
+        container:[container]
+      });
       
-      instance.getDraw = function () {
-        return {
-          type: "complex",
-          layers: instance.layers
-        };
-      }
-      // remove all this layer nonsense once the 'composite' class is fleshed out
-      instance.getLayer = function (layerId) {
-        return instance.layers[layerId].entities;
-      };
-      
+
       instance.changeLabelText = function (callback) {
-        instance.getLayer("text")[0].changeText(callback); // lazy
-      }
+        instance.getLayer("text")[0].changeText(callback);
+      };
       
       return instance;
     },
@@ -1364,15 +1452,17 @@ var jas = {};
           frames.push(frame(x, y, w, h));
         }
         
-        //console.log(stop);
+        var defaultFrame = animMutator.defaultFrame || frames.length - 1;
         
+        animation.onend = animMutator.onend;
+        
+        //console.log(stop);
         var currentFrame = 0;
         var done = false;
-        
-        var timer = jas.Util.timer();
+
+        var timer = jas.Util.timer(1000/fps, false);
         timer.start();
-        timer.setTimer(1000/fps);
-        
+
         animation.update = function () {
           if (done) {
             return; 
@@ -1385,10 +1475,12 @@ var jas = {};
             }
             
             else if (lastFrame) {
-              currentFrame = frames.length - 1;
+              currentFrame = defaultFrame || frames.length - 1;
+              if (typeof(animation.onend) == "function") {
+                animation.onend();
+              }
               done = true
             }
-            
           });
         };
         
@@ -1404,20 +1496,9 @@ var jas = {};
         if (animMutator.def) {
           instance.anim = animation;
         }
-        
         return animation;
       }
       
-      
-      var Directions = {
-        UP: -1,
-        RIGHT: 1,
-        DOWN: 1,
-        LEFT: -1
-      };
-      
-      var dirY = Directions.DOWN;
-      var dirX = Directions.RIGHT;
       
       var imageId = mutator? mutator.imageId: null;
       var imageW = jas.Asset.getImage(imageId).width;
@@ -1473,56 +1554,9 @@ var jas = {};
           imageId: imageId
         };
       };
-      
-      // locomotive methods
-      instance.moveUp = function () {
-        dirY = Directions.UP;
-        this.y -= this.spd;
-      };
-      
-      instance.moveRight = function () {
-        dirX = Directions.RIGHT;
-        this.x += this.spd;
-      };
-      
-      instance.moveDown = function () {
-        dirY = Directions.DOWN;
-        this.y += this.spd;
-        
-      };
-      
-      instance.moveLeft = function () {
-        dirX = Directions.LEFT;
-        this.x -= this.spd;
-      };
-      
-      instance.collide = function () {
-        switch (dirY) {
-          case Directions.UP:
-            this.y += this.spd;
-            dirY = 0;
-            break;
-          case Directions.DOWN:
-            this.y -= this.spd;
-            dirY = 0;
-            break;
-        }
-        switch (dirX) {
-          case Directions.RIGHT:
-            this.x -= this.spd;
-            dirX = 0;
-            break;
-          case Directions.LEFT:
-            this.x += this.spd;
-            dirX = 0;
-            break;
-          
-        }
-      };
-      
-      // end locomotive methods
-      
+
       return instance;
+      
     },
     spawnZone: function (mutator) {
       var mutator = mutator || {};
@@ -1621,10 +1655,9 @@ var jas = {};
       // everything in this mutator is sanitized of underscores.
       // this is the parsed map data.
       mutator = mutator? mutator : {};
-      var instance = this.rect(mutator);
+      var instance = this.composite(mutator);
       
       var tileMutators = {};
-      instance.layers = {};
       
       var tileW = mutator.tileW,
           tileH = mutator.tileH,
@@ -1636,8 +1669,8 @@ var jas = {};
       
       instance.makeTiles = function () {
         for (var i in mutator.layers) {
-          var layer = {};
-          layer.entities = [];
+          var layer = [];
+
           
           for (var j in mutator.layers[i].entities) {
             var tileData = mutator.layers[i].entities[j];
@@ -1657,44 +1690,14 @@ var jas = {};
             
             // remove first four arguments...
             var tile = classes.tile(tileData);
-            layer.entities.push(tile);
+            layer.push(tile);
           }
-          instance.layers[mutator.layers[i].name] = layer;
+          instance.addLayer(mutator.layers[i].name, layer);
           
         }
         
       };
-      
-      
-      instance.getDraw = function (layer) {
-        if (instance.layers[layer]) {
-          return {
-            type: "complex",
-            layers: instance.layers[layer].entities
-          };
-        }
-        else {
-          return false;
-        }
-      };
-      // remove all this layer nonsense once the 'composite' class is fleshed out
-      instance.getLayer = function (layerId, callback) {
-        var groupLayer;
-        if (instance.layers && instance.layers[layerId]) {
-          groupLayer = instance.layers[layerId];
-          if (typeof(callback) == "function" && groupLayer && groupLayer.entities) {
-            groupLayer.entities.forEach( function(val, index, arr) {
-              callback(val, index, arr);
-            });
-          }
-          return true;
-        }
-        else
-        {
-          return false;
-        }
-      };
-      
+
       return instance;
     }
   }
@@ -1797,24 +1800,24 @@ var jas = {};
   function masterControllerFactory(canvas) {
     controller = {};
     
-    jas.Event.addPublication("MOUSE_PRESSED");
-    jas.Event.addPublication("MOUSE_DOWN");
-    jas.Event.addPublication("MOUSE_UP");
+    jas.Event.addPublication("MOUSE_IS_PRESSED");
+    jas.Event.addPublication("MOUSE_IS_DOWN");
+    jas.Event.addPublication("MOUSE_IS_UP");
     
     canvas.addEventListener('mousedown', function (e) {
       if (controller.mouseup) {
         delete controller.mouseup;
-        jas.Event.publish("MOUSE_PRESSED");
+        jas.Event.publish("MOUSE_IS_PRESSED", e);
       }
       controller.mousedown = true;
-      jas.Event.publish("MOUSE_DOWN");
+      jas.Event.publish("MOUSE_IS_DOWN", e);
       
     }, false);
     
     canvas.addEventListener('mouseup', function () {
       if (controller.mousedown) {
         delete controller.mousedown;
-        jas.Event.publish("MOUSE_UP");
+        jas.Event.publish("MOUSE_IS_UP", e);
       }
       controller.mouseup = true;
       
@@ -1845,16 +1848,16 @@ var jas = {};
     
     for (var i in keyCodes) {
       keysByNum[keyCodes[i]] = i;
-      jas.Event.addPublication(i + "_PRESSED");
-      jas.Event.addPublication(i + "_DOWN");
-      jas.Event.addPublication(i + "_UP");
+      jas.Event.addPublication(i + "_IS_PRESSED");
+      jas.Event.addPublication(i + "_IS_DOWN");
+      jas.Event.addPublication(i + "_IS_UP");
     }
     
     function addKey (e) {
       var key = keysByNum[e.keyCode];
       
       if (!keys[e.keyCode]) {
-        jas.Event.publish(key + "_PRESSED");
+        jas.Event.publish(key + "_IS_PRESSED");
       }
       
       keys[e.keyCode] = true;
@@ -1863,7 +1866,7 @@ var jas = {};
     function removeKey(e) {
       delete keys[e.keyCode];
       var key = keysByNum[e.keyCode];
-      jas.Event.publish(key+ "_UP");
+      jas.Event.publish(key+ "_IS_UP");
     }
     
     
@@ -1874,7 +1877,7 @@ var jas = {};
     function isKeyDown (key) {
       var isIt = keys[keyCodes[key]];
       if (isIt) {
-        jas.Event.publish(keysByNum[keyCodes[key]] + "_DOWN");
+        jas.Event.publish(keysByNum[keyCodes[key]] + "_IS_DOWN");
       }
       return  isIt ? true: false;
     }
@@ -1883,16 +1886,16 @@ var jas = {};
     // master controller public api
     var controller = {
       isKeyDown: isKeyDown,
-      checkKeys: function() {
-        for (var i in keys) {
-          var key = keys[i];
-          jas.Event.publish(keysByNum[keyCodes[key]] + "_DOWN");
-        }
-      },
-      areKeysDown: function (keyArr, callback) {
+      areKeysDown: function (keyArr) {
         for (var i in keyArr) {
           var key = keyArr[i];
-          if (isKeyDown(key)) {
+          isKeyDown(key)
+        }
+      },
+      areAllKeysDown: function (keyArr, callback) {
+        for (var i in keyArr) {
+          var key = keyArr[i];
+          if (!isKeyDown(key)) {
             return false;
           }
         }
@@ -1920,14 +1923,32 @@ var jas = {};
     controller: function (mutator) {
       mutator = mutator || {};
       var instance = {};
+      subscriptions = {};
       
       instance.id = controllerAutoId++;
-      
-      // add subscribers to master controllers publications
-      for (var pub in mutator) {
-        jas.Event.subscribe(pub, controllerAutoId, mutator[pub]);
+      function subscribeAll () {
+        // add subscribers to master controllers publications
+        for (var pub in mutator) {
+          var subscription = jas.Event.subscribe(pub, mutator[pub]);
+          subscriptions["jas-controller-" + controllerAutoId] = subscription;
+        }
       }
       
+      subscribeAll();
+      
+      instance.kill = function () {
+        for (var i in subscriptions) {
+          var subscription = subscriptions[i];
+          subscription.unsubscribe();
+        }
+      };
+      
+      instance.revive = function () {
+        for (var i in subscriptions) {
+          var subscription = subscriptions[i];
+          subscription.resubscribe();
+        }
+      };
       
       return instance;
     }
@@ -1954,6 +1975,7 @@ var jas = {};
     newClass: newClass
   };
 })(jas);
+
 (function (jas) {
   function graphicsFactory (canvas, ctx) {
     function drawRect (draw) {
@@ -2026,7 +2048,7 @@ var jas = {};
       for (var i in draw.layers) {
         var layer = draw.layers[i];
         //console.log(layer);
-        iterateDrawGroup(layer.entities);
+        iterateDrawGroup(layer);
       }
     }
     
@@ -2036,8 +2058,8 @@ var jas = {};
     }
     
     function renderGroupLayer (groupId, layerId) {
-      jas.Entity.getFirst(groupId, function (instance) {
-        iterateDrawGroup(instance.layers[layerId].entities);
+      jas.Entity.getGroup(groupId, function (instance) {
+        iterateDrawGroup(instance.getLayer(layerId));
       });
     }
     
@@ -2082,6 +2104,23 @@ var jas = {};
       ctx.globalAlpha = alpha ? alpha: 1;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
+    
+    function getScreenImage (imageId, callback) {
+      var url = canvas.toDataURL();
+      jas.Asset.newImage(imageId, url, callback);
+    }
+    
+    function getScreenDimensions () {
+      return {
+        w: canvas.width,
+        h: canvas.height
+      };
+    }
+    
+    jas.Graphics = {
+      getScreenImage: getScreenImage,
+      getScreenDimensions: getScreenDimensions
+    };
     
     return {
       renderGroup: renderGroup,
@@ -2151,15 +2190,15 @@ var jas = {};
 
   
   // animation
-  var then;
   var wn = window;
   var requestAnimationFrame = wn.requestAnimationFrame || wn.mozRequestAnimationFrame ||
    wn.msRequestAnimationFrame || wn.webkitRequestAnimationFrame || wn.oRequestAnimationFrame;
-   
+  var targetRate;
+  var timer;
    
   // STARTER FLUID METHODS
   // init method accepts id attribute of DOM game frame.
-  function init (frameId, w, h) {
+  function init (frameId, w, h, target) {
     function initError (err) {
       console.error(err);
     }
@@ -2183,18 +2222,21 @@ var jas = {};
     gameFrame.appendChild(canvas);
     // init game states
     jas.State.initAllStates();
-
+    
+    targetRate = 1000/target || 1000/60;
+    timer = jas.Util.timer(targetRate, false);
   }
   
   function begin() {
-    then = Date.now();
+    timer.start();
     main();
   }
   
   function main() {
-    var now = Date.now() - then;
-    jas.State.updateState(now, Controller, Graphics);
     requestAnimationFrame(main);
+    timer.checkTime(function (time) {
+      jas.State.updateState(time, Controller, Graphics);
+    });
   }
   
   
@@ -2202,4 +2244,143 @@ var jas = {};
   jas.begin = begin;
   
     
+})(jas);
+(function (jas) {
+  
+  var physicsAutoId = 0;
+  
+  var DIRS = {
+    UP: -1,
+    RIGHT: 1,
+    DOWN: 1,
+    LEFT: -1
+  };
+
+  var classes = {
+    // simple vector updates a value constantly
+    // e.g. gravity, hitting a wall in most games
+    core: function (mutator) {
+      mutator = mutator || {};
+      var instance = {};
+      
+      var update;
+      
+      instance.bind = function (entity) {
+        
+        update = function (dir, val) {
+          entity[dir] += val;
+        }
+        instance.update = update;
+      };
+      
+      
+      
+      return instance;
+    },
+    orthogonal: function (mutator) {
+      // zelda-like physics
+      var dirX = 0,
+          dirY = 0;
+          
+      var instance = classes.core(mutator);
+      instance.resetDirs = function () {
+        dirX = 0;
+        dirY = 0;
+      }
+      
+      instance.resetDirX = function () {
+        dirX = 0;
+      }
+      
+      instance.resetDirY = function () {
+        dirY = 0;
+      }
+      
+      instance.up = function (val) {
+        dirY = DIRS.UP;
+        instance.update("y", -val);
+      };
+      instance.right = function (val) {
+        dirX = DIRS.RIGHT;
+        instance.update("x", val);
+      };
+      instance.down = function (val) {
+        dirY = DIRS.DOWN;
+        instance.update("y", val);
+      };
+      instance.left = function (val) {
+        dirX = DIRS.LEFT;
+        instance.update("x", -val);
+      };
+      instance.collide = function (val) {
+        if (dirY == DIRS.UP ) {
+          instance.update("y", val);
+        }
+        else if (dirY == DIRS.DOWN) {
+          instance.update("y", -val);
+        }
+        
+        if (dirX == DIRS.RIGHT) {
+          instance.update("x", -val);
+        }
+        else if (dirX == DIRS.LEFT) {
+          instance.update("x", val);
+        } 
+      }
+      return instance;
+    },
+    radial: function (mutator) {
+    // pinball-like physics
+      var instance = classes.core(mutator);
+      
+      instance.move = function (rad, val) {
+      // todo, do some trig to get x and y differences
+      };
+    },
+    platformer: function (mutator) {
+    // mario-like physics
+      mutator = mutator || {};
+      var instance = classes.core();
+      instance.left = function () {
+        instance.update("x", -val);
+      };
+      instance.right = function () {
+        instance.update("x", val);
+      };
+      instance.collide = function () {
+        // logic for landing ontop of things
+        
+        // logic for left and right collision
+      };
+      instance.jump = function (rad, val) {
+        
+      };
+      instance.gravity = function (val) {
+        instance.update("y", val);
+      };
+      
+      return instance;
+    }
+  }
+  
+  function inst (type, mutator) {
+    if (typeof(classes[type]) == 'function') {
+      return classes[type](mutator);
+    }
+    else {
+      return false;
+    }
+  }
+
+  function newClass (type, callback) {
+    if (typeof(callback) == "function") {
+      classes[type] = callback;
+    }
+  }
+  
+  jas.Physics = {
+    inst: inst,
+    newClass: newClass
+  }
+
 })(jas);

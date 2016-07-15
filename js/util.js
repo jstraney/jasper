@@ -1,5 +1,5 @@
 (function (jas) {
-  function timer(interval, isRandom) {
+  function timerFactory(interval, isRandom) {
     var then;
     var done;
     var originalInterval = interval || null;
@@ -14,6 +14,10 @@
       interval = interval || 0;
       timeSet = true;
       then = Date.now();
+    }
+    
+    function getInterval () {
+      return interval;
     }
     
     function contractInterval(amount) {
@@ -45,19 +49,19 @@
       var now = Date.now();
       
       if (now - then >= interval) {
-        if (typeof(itsTime) == "function") {
-          itsTime();
-        }
-        then = now;
         if (isRandom) {
           setTimer(originalInterval);  
+        }
+        if (typeof(itsTime) == "function") {
+          then = now;
+          return itsTime(now);
         }
         return true;
       }
       else {
         //console.log(getTime());
         if (typeof(notTime) == "function") {
-          notTime();
+          return notTime(now - then);
         }
         
         return false;
@@ -78,6 +82,7 @@
       stop: stop,
       setTimer: setTimer,
       checkTime: checkTime,
+      getInterval: getInterval,
       getTime: getTime
     }
   }
@@ -97,7 +102,7 @@
     function checkStatus (state, status) {
       return states[state] == status? true: false;
     }
-    
+        
     return {
       setState: setState,
       getState: getState,
@@ -105,8 +110,65 @@
     };
   }
   
-  jas.Util = {
-    timer: timer,
-    finiteStateMachine: finiteStateMachine
+  function graphFactory () {
+    // factory that graphs lines and points on lines
+    
+    var classes = {
+      constant: function (y) {
+        return function (x) {
+          return y; // lol
+        };
+      },
+      linear: function (m, b) {
+        return function (x) {
+          return m*x + b;
+        };
+      },
+      exponential: function (b) {
+        return function(x) {
+          return x * x + b;
+        };
+      },
+      quadratic: function (a, b, c) {
+        return function (x) {
+          return (a * x * x) + (b * x) + c;
+        };
+      },
+      logarithmic: function (x) {
+        return function (x) {
+          
+        };
+      }
+    };
+    
+    function inst (type, mutator) {
+      if (typeof(classes[type]) == 'function') {
+        return classes[type](mutator);
+      }
+      else {
+        return false;
+      }
+    }
+  
+    function newClass (type, callback) {
+      if (typeof(callback) == "function") {
+        classes[type] = callback;
+      }
+    }
+    
+    return {
+      inst: inst,
+      newClass: newClass
+    }
   }
+  
+  var Graph = graphFactory();
+  
+  
+  
+  jas.Util = {
+    timer: timerFactory,
+    finiteStateMachine: finiteStateMachine,
+    Graph: Graph
+  };
 })(jas);

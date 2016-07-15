@@ -8,24 +8,24 @@
   function masterControllerFactory(canvas) {
     controller = {};
     
-    jas.Event.addPublication("MOUSE_PRESSED");
-    jas.Event.addPublication("MOUSE_DOWN");
-    jas.Event.addPublication("MOUSE_UP");
+    jas.Event.addPublication("MOUSE_IS_PRESSED");
+    jas.Event.addPublication("MOUSE_IS_DOWN");
+    jas.Event.addPublication("MOUSE_IS_UP");
     
     canvas.addEventListener('mousedown', function (e) {
       if (controller.mouseup) {
         delete controller.mouseup;
-        jas.Event.publish("MOUSE_PRESSED");
+        jas.Event.publish("MOUSE_IS_PRESSED", e);
       }
       controller.mousedown = true;
-      jas.Event.publish("MOUSE_DOWN");
+      jas.Event.publish("MOUSE_IS_DOWN", e);
       
     }, false);
     
     canvas.addEventListener('mouseup', function () {
       if (controller.mousedown) {
         delete controller.mousedown;
-        jas.Event.publish("MOUSE_UP");
+        jas.Event.publish("MOUSE_IS_UP", e);
       }
       controller.mouseup = true;
       
@@ -56,16 +56,16 @@
     
     for (var i in keyCodes) {
       keysByNum[keyCodes[i]] = i;
-      jas.Event.addPublication(i + "_PRESSED");
-      jas.Event.addPublication(i + "_DOWN");
-      jas.Event.addPublication(i + "_UP");
+      jas.Event.addPublication(i + "_IS_PRESSED");
+      jas.Event.addPublication(i + "_IS_DOWN");
+      jas.Event.addPublication(i + "_IS_UP");
     }
     
     function addKey (e) {
       var key = keysByNum[e.keyCode];
       
       if (!keys[e.keyCode]) {
-        jas.Event.publish(key + "_PRESSED");
+        jas.Event.publish(key + "_IS_PRESSED");
       }
       
       keys[e.keyCode] = true;
@@ -74,7 +74,7 @@
     function removeKey(e) {
       delete keys[e.keyCode];
       var key = keysByNum[e.keyCode];
-      jas.Event.publish(key+ "_UP");
+      jas.Event.publish(key+ "_IS_UP");
     }
     
     
@@ -85,7 +85,7 @@
     function isKeyDown (key) {
       var isIt = keys[keyCodes[key]];
       if (isIt) {
-        jas.Event.publish(keysByNum[keyCodes[key]] + "_DOWN");
+        jas.Event.publish(keysByNum[keyCodes[key]] + "_IS_DOWN");
       }
       return  isIt ? true: false;
     }
@@ -94,16 +94,16 @@
     // master controller public api
     var controller = {
       isKeyDown: isKeyDown,
-      checkKeys: function() {
-        for (var i in keys) {
-          var key = keys[i];
-          jas.Event.publish(keysByNum[keyCodes[key]] + "_DOWN");
-        }
-      },
-      areKeysDown: function (keyArr, callback) {
+      areKeysDown: function (keyArr) {
         for (var i in keyArr) {
           var key = keyArr[i];
-          if (isKeyDown(key)) {
+          isKeyDown(key)
+        }
+      },
+      areAllKeysDown: function (keyArr, callback) {
+        for (var i in keyArr) {
+          var key = keyArr[i];
+          if (!isKeyDown(key)) {
             return false;
           }
         }
@@ -131,14 +131,32 @@
     controller: function (mutator) {
       mutator = mutator || {};
       var instance = {};
+      subscriptions = {};
       
       instance.id = controllerAutoId++;
-      
-      // add subscribers to master controllers publications
-      for (var pub in mutator) {
-        jas.Event.subscribe(pub, controllerAutoId, mutator[pub]);
+      function subscribeAll () {
+        // add subscribers to master controllers publications
+        for (var pub in mutator) {
+          var subscription = jas.Event.subscribe(pub, mutator[pub]);
+          subscriptions["jas-controller-" + controllerAutoId] = subscription;
+        }
       }
       
+      subscribeAll();
+      
+      instance.kill = function () {
+        for (var i in subscriptions) {
+          var subscription = subscriptions[i];
+          subscription.unsubscribe();
+        }
+      };
+      
+      instance.revive = function () {
+        for (var i in subscriptions) {
+          var subscription = subscriptions[i];
+          subscription.resubscribe();
+        }
+      };
       
       return instance;
     }

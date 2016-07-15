@@ -70,7 +70,7 @@
       for (var i in draw.layers) {
         var layer = draw.layers[i];
         //console.log(layer);
-        iterateDrawGroup(layer.entities);
+        iterateDrawGroup(layer);
       }
     }
     
@@ -80,8 +80,8 @@
     }
     
     function renderGroupLayer (groupId, layerId) {
-      jas.Entity.getFirst(groupId, function (instance) {
-        iterateDrawGroup(instance.layers[layerId].entities);
+      jas.Entity.getGroup(groupId, function (instance) {
+        iterateDrawGroup(instance.getLayer(layerId));
       });
     }
     
@@ -126,6 +126,23 @@
       ctx.globalAlpha = alpha ? alpha: 1;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
+    
+    function getScreenImage (imageId, callback) {
+      var url = canvas.toDataURL();
+      jas.Asset.newImage(imageId, url, callback);
+    }
+    
+    function getScreenDimensions () {
+      return {
+        w: canvas.width,
+        h: canvas.height
+      };
+    }
+    
+    jas.Graphics = {
+      getScreenImage: getScreenImage,
+      getScreenDimensions: getScreenDimensions
+    };
     
     return {
       renderGroup: renderGroup,

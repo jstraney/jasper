@@ -41,9 +41,7 @@
         controller = userController || false;
         
       }
-      
-      
-      
+
       instance.id = entityAutoId;
       entityAutoId++;
       instance.x = mutator.x || 0;
@@ -161,8 +159,8 @@
     },
     // call it a proxy-class if you will. This relays to a different class depending on values in mutator
     shape : function (mutator) {
-      
-      instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
+      var instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
+      instance.shape = mutator.shape;
       var collideable = mutator.collideable? mutator.collideable: true;
       instance.setState("collideable", collideable);   // using class entity's FSM 
       
@@ -176,11 +174,19 @@
       instance.getLayer = function (layerId, callback) {
         var layer = layers[layerId];
         if (typeof(callback) == "function" && layer) {
-          callback(layer);
+          for (var i = 0; i < layer.length; i ++) {
+            callback(layer[i]);
+          }
         }
         else
         {
           return layer;
+        }
+      }
+      
+      instance.addLayers = function (layerMutator) {
+        for (var i in layerMutator) {
+          instance.addLayer(i, layerMutator[i]);
         }
       }
       
@@ -193,6 +199,17 @@
         var layer = layers[layerId];
         layer.push(entity);
       };
+      
+      instance.orderLayers = function () {
+        
+      };
+
+      instance.getDraw = function () {
+        return {
+          type: "complex",
+          layers: instance.layers
+        };
+      }
       
       return instance;
       
@@ -342,6 +359,7 @@
         //save string as a png in Assets. Once loaded, change draw.
         jas.Asset.newImage("text-image:"+instance.id, url, function (image) {
           document.appendChild(image);
+          
           var draw = {
             type: "sprite",
             frame: {
@@ -372,7 +390,7 @@
     label : function (mutator) {
       mutator = mutator || {};
       
-      var instance = classes.entity(mutator);
+      var instance = classes.component(mutator);
       
       var textMutator = mutator.text || {};
       
@@ -405,29 +423,15 @@
       });
       
       //console.log(container);
-      instance.layers = {
-        text: {
-          entities: [text]
-        },
-        container: {
-          entities: [container]
-        }
-      };
+      instance.addLayers({
+        text: [text],
+        container:[container]
+      });
       
-      instance.getDraw = function () {
-        return {
-          type: "complex",
-          layers: instance.layers
-        };
-      }
-      // remove all this layer nonsense once the 'composite' class is fleshed out
-      instance.getLayer = function (layerId) {
-        return instance.layers[layerId].entities;
-      };
-      
+
       instance.changeLabelText = function (callback) {
-        instance.getLayer("text")[0].changeText(callback); // lazy
-      }
+        instance.getLayer("text")[0].changeText(callback);
+      };
       
       return instance;
     },
@@ -466,15 +470,17 @@
           frames.push(frame(x, y, w, h));
         }
         
-        //console.log(stop);
+        var defaultFrame = animMutator.defaultFrame || frames.length - 1;
         
+        animation.onend = animMutator.onend;
+        
+        //console.log(stop);
         var currentFrame = 0;
         var done = false;
-        
-        var timer = jas.Util.timer();
+
+        var timer = jas.Util.timer(1000/fps, false);
         timer.start();
-        timer.setTimer(1000/fps);
-        
+
         animation.update = function () {
           if (done) {
             return; 
@@ -487,10 +493,12 @@
             }
             
             else if (lastFrame) {
-              currentFrame = frames.length - 1;
+              currentFrame = defaultFrame || frames.length - 1;
+              if (typeof(animation.onend) == "function") {
+                animation.onend();
+              }
               done = true
             }
-            
           });
         };
         
@@ -506,20 +514,9 @@
         if (animMutator.def) {
           instance.anim = animation;
         }
-        
         return animation;
       }
       
-      
-      var Directions = {
-        UP: -1,
-        RIGHT: 1,
-        DOWN: 1,
-        LEFT: -1
-      };
-      
-      var dirY = Directions.DOWN;
-      var dirX = Directions.RIGHT;
       
       var imageId = mutator? mutator.imageId: null;
       var imageW = jas.Asset.getImage(imageId).width;
@@ -575,56 +572,9 @@
           imageId: imageId
         };
       };
-      
-      // locomotive methods
-      instance.moveUp = function () {
-        dirY = Directions.UP;
-        this.y -= this.spd;
-      };
-      
-      instance.moveRight = function () {
-        dirX = Directions.RIGHT;
-        this.x += this.spd;
-      };
-      
-      instance.moveDown = function () {
-        dirY = Directions.DOWN;
-        this.y += this.spd;
-        
-      };
-      
-      instance.moveLeft = function () {
-        dirX = Directions.LEFT;
-        this.x -= this.spd;
-      };
-      
-      instance.collide = function () {
-        switch (dirY) {
-          case Directions.UP:
-            this.y += this.spd;
-            dirY = 0;
-            break;
-          case Directions.DOWN:
-            this.y -= this.spd;
-            dirY = 0;
-            break;
-        }
-        switch (dirX) {
-          case Directions.RIGHT:
-            this.x -= this.spd;
-            dirX = 0;
-            break;
-          case Directions.LEFT:
-            this.x += this.spd;
-            dirX = 0;
-            break;
-          
-        }
-      };
-      
-      // end locomotive methods
-      
+
       return instance;
+      
     },
     spawnZone: function (mutator) {
       var mutator = mutator || {};
@@ -723,10 +673,9 @@
       // everything in this mutator is sanitized of underscores.
       // this is the parsed map data.
       mutator = mutator? mutator : {};
-      var instance = this.rect(mutator);
+      var instance = this.composite(mutator);
       
       var tileMutators = {};
-      instance.layers = {};
       
       var tileW = mutator.tileW,
           tileH = mutator.tileH,
@@ -738,8 +687,8 @@
       
       instance.makeTiles = function () {
         for (var i in mutator.layers) {
-          var layer = {};
-          layer.entities = [];
+          var layer = [];
+
           
           for (var j in mutator.layers[i].entities) {
             var tileData = mutator.layers[i].entities[j];
@@ -759,44 +708,14 @@
             
             // remove first four arguments...
             var tile = classes.tile(tileData);
-            layer.entities.push(tile);
+            layer.push(tile);
           }
-          instance.layers[mutator.layers[i].name] = layer;
+          instance.addLayer(mutator.layers[i].name, layer);
           
         }
         
       };
-      
-      
-      instance.getDraw = function (layer) {
-        if (instance.layers[layer]) {
-          return {
-            type: "complex",
-            layers: instance.layers[layer].entities
-          };
-        }
-        else {
-          return false;
-        }
-      };
-      // remove all this layer nonsense once the 'composite' class is fleshed out
-      instance.getLayer = function (layerId, callback) {
-        var groupLayer;
-        if (instance.layers && instance.layers[layerId]) {
-          groupLayer = instance.layers[layerId];
-          if (typeof(callback) == "function" && groupLayer && groupLayer.entities) {
-            groupLayer.entities.forEach( function(val, index, arr) {
-              callback(val, index, arr);
-            });
-          }
-          return true;
-        }
-        else
-        {
-          return false;
-        }
-      };
-      
+
       return instance;
     }
   }

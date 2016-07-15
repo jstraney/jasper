@@ -1,49 +1,87 @@
 /* global namespace jas*/
 jas.State.addState("main",
   function init () {
+    jas.Event.addPublication("main-state-reset");
+    
     jas.Asset.newImage("player", "res/images/player.png", function () {
-      // define a new class based on sprite
+      // When the image loads, define a player class
       jas.Entity.newClass("player", function (mutator) {
-        var instance = this.sprite(mutator); // 'this' is Entity with capital E
-        var mutator = mutator? mutator: {};
-        instance.spd = mutator.spd? mutator.spd: 2;
-        var lastHit = Date.now();
+        var instance = this.sprite(mutator); // 'this' is jas.Entity
         
-        var spd = 1;
+        var spd = 2;
+        // physics object. This variety applies simple 'oldschool-z*lda-like' physics
+        var phys = jas.Physics.inst("orthogonal");
+        phys.bind(instance);
         
         var controller = jas.Controller.inst("controller", {
-          "UP_DOWN": function () {
+         "UP_IS_DOWN": function () {  
             instance.setAnim("wu");
-            instance.y -= spd;
+            phys.up(spd);
           },
-          "RIGHT_DOWN": function () {
+          "RIGHT_IS_DOWN": function () {
             instance.setAnim("wr");
-            instance.x += spd;
+            phys.right(spd);
           },
-          "DOWN_DOWN": function () {
+          "DOWN_IS_DOWN": function () {
             instance.setAnim("wd");
-            instance.y += spd;
+            phys.down(spd);
           },
-          "LEFT_DOWN": function () {
+          "LEFT_IS_DOWN": function () {
             instance.setAnim("wl");
-            instance.x -= spd;
+            phys.left(spd);
           },
-          "UP_UP": function () {
+          "UP_IS_UP": function () {
+            phys.resetDirY();
             if (instance.getAnimId() == "wu")
               instance.setAnim("su");
           },
-          "RIGHT_UP": function () {
-            if (instance.getAnimId() == "wr")
-              instance.setAnim("sr");
+          "RIGHT_IS_UP": function () {
+            phys.resetDirX();
+            instance.setAnim("sr");
           },
-          "DOWN_UP": function () {
-            if (instance.getAnimId() == "wd")
-              instance.setAnim("sd");
+          "DOWN_IS_UP": function () {
+            phys.resetDirY();
+            instance.setAnim("sd");
           },
-          "LEFT_UP": function () {
-            if (instance.getAnimId() == "wl")
-              instance.setAnim("sl");
-          }
+          "LEFT_IS_UP": function () {
+            phys.resetDirX();
+            instance.setAnim("sl");
+          },
+        });
+        
+        jas.Event.addPublication("playerCollides");
+        
+        var collide = jas.Event.subscribe("playerCollides", function (obj) {
+          phys.collide(spd);
+        });
+        
+        // this defines a publication local to the player class's scope
+        jas.Event.addPublication("playerLocation");
+        
+        // extend the sprite class with a function.
+        instance.emitLocation = function () {
+          // now publish to the publication sending a payload of the players center coordinates
+          jas.Event.publish("playerLocation", instance.getCenter());
+
+          // get center is from the shape classes
+        }
+        
+        jas.Event.addPublication("playerHit");
+        
+        var doDamage = jas.Event.subscribe("playerHit", function (obj) {
+          // stop key events
+          controller.kill(); // player controller should not work.
+          instance.setAnim("die");
+          // change game state to game over
+        });
+        
+        jas.Event.subscribe("main-state-reset", "relocate-player", function () {
+          instance.x = 32;
+          instance.y = 32;
+          dirY = 0;
+          dirX = 0;
+          instance.setAnim("sd"); 
+          controller.revive(); // resume use of controller
         });
         
         return instance;
@@ -62,18 +100,34 @@ jas.State.addState("main",
           { name: "sd", start: 0, stop: 1, def: true}, 
           { name: "wd", start: 0, stop : 8, looping: true},
           { name: "wu", start: 8, stop : 16, looping: true},
-          { name: "su", start: 8, stop : 9, looping: true},
+          { name: "su", start: 8, stop : 9},
           { name: "wr", start: 16, stop : 24, looping: true},
-          { name: "sr", start: 16, stop : 17, looping: true},
+          { name: "sr", start: 16, stop : 17},
           { name: "wl", start: 24, stop : 32, looping: true},
-          { name: "sl", start: 24, stop : 25, looping: true}
+          { name: "sl", start: 24, stop : 25},
+          { name: "die", start: 52, stop: 57,
+            onend: function () {
+              // once death animation stops, get a screen shot
+              jas.Graphics.getScreenImage("screenShot", function () {
+                var dimensions = jas.Graphics.getScreenDimensions();
+                // create a new sprite entity with that screenshot as it's image
+                jas.Entity.addEntity(jas.Entity.inst("sprite", {
+                  imageId: "screenShot",
+                  x: 0,
+                  y: 0,
+                  w: dimensions.w,
+                  h: dimensions.h
+                }), "screenShot");
+              });
+              jas.State.changeState("gameOver");
+            }
+          }
         ]
       }), 'player');
       
     });
     
     jas.Event.addPublication("pickUpFruit");
-    
 
     jas.Asset.newImage("fruit", "res/images/fruit.png", function () {
       jas.Entity.newClass("fruit", function (mutator) {
@@ -128,22 +182,30 @@ jas.State.addState("main",
         spawnGroup: "fruit"
       });
       
-      jas.Event.subscribe("pickUpFruit", "addScore", function (fruit) {
+      var clearFruit = jas.Event.subscribe("main-state-reset", function () {
+        fruitSpawnZone.clear();
+      });
+      
+      var addScore = jas.Event.subscribe("pickUpFruit", function (fruit) {
         scoreBoard.addScore(fruit.points);
       });
       
-      jas.Event.subscribe("pickUpFruit", "removeFruit", function (fruit) {
+      var removeFruit = jas.Event.subscribe("pickUpFruit", function (fruit) {
         fruitSpawnZone.removeSpawnById(fruit.id); 
       });
       
-      
       jas.Entity.addEntity( fruitSpawnZone, "spawnZones");
       
+      // Score class. Extends the label class.
       jas.Entity.newClass("score", function (mutator) {
-        mutator = mutator || {};
         var score = 0;
+        
+        mutator = mutator || {};
         mutator.string = mutator.string || "score: " + score;
         var instance = this.label(mutator); // extend label class
+        
+        
+        var areThereAliens = false;
         
         instance.getScore = function () {
           return score;
@@ -151,20 +213,30 @@ jas.State.addState("main",
         
         instance.addScore = function (val) {
           score += val;
-          
-          if (score > 100 && score <= 300) {
-            fruitSpawnZone.configureSpawn("strawberry", {w:32, h:32}); 
+          if (score > 500 && !areThereAliens) {
+            jas.Event.publish("theyHaveCome");
+            addScore.unsubscribe();
+            areThereAliens = true;
           }
-          else if (score > 300) {
+          if (score > 300) {
             fruitSpawnZone.configureSpawn("watermellon", {w:32, h:32});
             
           }
+          else if (score > 100) {
+            fruitSpawnZone.configureSpawn("strawberry", {w:32, h:32}); 
+          }
+          
           // change text is from label
           instance.changeLabelText(function (oldString) {
             // you could manipulate oldString if you wanted to
             return "score: " + score; // return the new one
           });
         };
+        
+        var resetScore = jas.Event.subscribe("main-state-reset", "resetScore", function () {
+          score = 0;
+          instance.addScore(0); // resets text
+        });
         
         return instance;
       });
@@ -179,8 +251,47 @@ jas.State.addState("main",
       });
       
       jas.Entity.addEntity(scoreBoard, "score");
+    });
+    
+    jas.Event.addPublication("theyHaveCome");
+    
+    jas.Asset.newImage("alien", "res/images/alien.png", function () {
       
-      
+      jas.Entity.newClass("alien", function (mutator) {
+        mutator = mutator || {};
+        mutator.imageId = "alien";
+        mutator.w = 32;
+        var spd = 1;
+        mutator.h = 32;
+        var instance = this.sprite(mutator);
+        
+        jas.Event.subscribe("playerLocation", "getPath-" + instance.id, function (pCord) {
+          instance.x = instance.x < pCord.x? instance.x + spd: instance.x - spd;
+          instance.y = instance.y < pCord.y? instance.y + spd: instance.y - spd;
+        });
+        
+        return instance;
+      });
+    });
+    
+    var alienSpawnZone = jas.Entity.inst("spawnZone", {
+        x: 32,
+        y: 32,
+        w: 32,
+        h: 32,
+        spawnType: "alien",
+        spawnMutator: {h: 32, w: 32},
+        spawnRate: 10000,
+        spawnMax: 3,
+        spawnGroup: "mobs"
+    });
+    
+    jas.Event.subscribe("theyHaveCome", "addAlienSpawnZone", function () {
+      jas.Entity.addEntity(alienSpawnZone, "spawnZones");
+    });
+    
+    jas.Event.subscribe("main-state-reset", "clear-aliens", function () {
+      alienSpawnZone.clear();
     });
     
 
@@ -209,15 +320,10 @@ jas.State.addState("main",
         
     var walls, activeTiles;
     
-    jas.Entity.getFirst("spawnZones", function (cherrySpawn) {
-      cherrySpawn.spawn();
+    jas.Entity.getGroup("spawnZones", function (zone) {
+      zone.spawn();
     });
     
-    if (map = jas.Entity.getMap("map")) {
-      walls = map.layers.walls.tiles;
-      activeTiles = map.layers.active_tiles.tiles;
-      
-    }
     
     
     
@@ -227,21 +333,29 @@ jas.State.addState("main",
       
       p.updateAnim();
       
-      if (!Controller.keysNotPressed(["UP", "RIGHT", "DOWN", "LEFT"])) {
-        Controller.isKeyDown("UP");
-        Controller.isKeyDown("RIGHT");
-        Controller.isKeyDown("DOWN");
-        Controller.isKeyDown("LEFT");
-      }
+      
+      Controller.isKeyDown("UP");
+      Controller.isKeyDown("RIGHT");
+      Controller.isKeyDown("DOWN");
+      Controller.isKeyDown("LEFT");
+      
 
       jas.Entity.getFirst("map", function (map) {
         map.getLayer("walls", function (wall) {
-          wall.isColliding(p, function () {
-            p.collide();
+          //console.log(wall);
+          return wall.isColliding(p, function () {
+            jas.Event.publish("playerCollides");
           });
         });
       });
       
+      jas.Entity.getGroup("mobs", function (mob) {
+        mob.isColliding(p, function () {
+          jas.Event.publish("playerHit");
+        });
+      });
+      
+      p.emitLocation();
       
       jas.Entity.getGroup("fruit", function(cherry) {
         cherry.isColliding(p, function () {
@@ -257,6 +371,7 @@ jas.State.addState("main",
     
     Graphics.renderGroupLayer("map", "floor");
     Graphics.renderGroup("fruit");
+    Graphics.renderGroup("mobs");
     Graphics.renderGroup("player");
     Graphics.renderGroupLayer("map", "walls");
     Graphics.renderGroup("score", "container");
@@ -265,6 +380,60 @@ jas.State.addState("main",
   }
 );
 
+
+// Game Over State
+jas.State.addState("gameOver",
+  function init () {
+    var resetMain = jas.Event.subscribe("main-state-reset", function () {
+      jas.State.setState("main");
+    });
+    
+    jas.Entity.addEntity(jas.Entity.inst("text", {
+      string: "Game Over...",
+      font: "18px Arial",
+      color: "#fff",
+      x: 110,
+      y: 150
+    }), "gui");
+    
+    jas.Entity.newClass("button", function (mutator) {
+      var click = mutator.click;
+      
+      var instance = this.label(mutator);
+      
+      controller = jas.Controller.inst("controller", {
+        "MOUSE_IS_UP": function (e) {
+          instance.contains({x: e.clientX, y: e.clientY}, click);
+        }
+      });
+      
+      return instance;
+    });
+    
+    jas.Entity.addEntity(jas.Entity.inst("button", {
+      string: "retry",
+      font: "16px Arial",
+      color: "#fff",
+      x: 110,
+      y: 180,
+      w: 50,
+      h: 20,
+      click: function () {
+        jas.Event.publish("main-state-reset");
+      }
+    }), "gui");
+    
+  },
+  
+  function update (delta) {
+    
+  },
+  
+  function render (Graphics) {
+    Graphics.renderGroup("screenShot");
+    Graphics.renderGroup("gui");
+  }
+);
 
 jas.init("game-frame");
 jas.begin();

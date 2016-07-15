@@ -32,19 +32,20 @@ Using the above example, you have a file of your own called
 a game screen.
 
 ```js
-// A game can be your main menu, game over screen, or the part where you
+// A game state can be your main menu, game over screen, or the part where you
 // play. Be sure to include at least one.
 
 jas.addState("main",
   //  you don't have to name these functions 'init', 'update' or 'render'
   // this is just to provide clarity
   function init () {
-    // Initialize entities, resources here.
+    // Initialize entities and resources here.
   },
   function update () {
-    // Game "logic" for this game state goes here
+    // Game "logic" for the state goes here
   },
   function render (graphics) {
+    // draw graphics here.
     graphics.fillScreen("#088");
   }
 );
@@ -60,7 +61,7 @@ jas.begin();
 
 Jasper uses the namespace "jas". Within that space, there are various
 modules that extend jaspers functionality. Once you've made a game frame,
-you'll probably want to add stuff to it. I'm going to defer using jaspers sprite
+you'll probably want to add stuff to it. I'm going to defer using jaspers 
 sprite class to make this a simple intro:
 
 ```js
@@ -78,7 +79,7 @@ jas.addState("main",
   function update (delta, controller) {
     var player;
     
-    // look how little 'if' logic there is up front!
+    // WARNING: not idiomatic code. See the Controller module in the wiki
     jas.Entity.getFirst("playerGroup", function() {
       controller.keyIsDown("RIGHT", function () {
         player.x++;
@@ -86,6 +87,7 @@ jas.addState("main",
     });
   },
   function render (graphics) {
+    // render all entities in that group.
     graphics.renderGroup("playerGroup");
   });
 ```
@@ -100,17 +102,26 @@ think rectangles are repulsive, you can make it a special rectangle:
 ```js
 //add this to game state's init
 jas.Entity.newClass("player", function(mutator) {
-  mutator = mutator || {}; // recommended
   var instance = this.rect(mutator); // 'this' is 'jas.Entity'. we're
   extending it
-  var health = 10;
+  var name = mutator.name || "jasper"; // injected name. Here's one way to set a default.
 
-  instance.saySomething = function () {
-    console.log("I have " +  health + " health!");  
-  }
+  var spd = 1; // private to the player class
+
+  // this is idiomatic, as opposed to the last example
+  jas.Controller.inst({
+    RIGHT_DOWN: function () {
+      instance.x += spd;
+      if (instance.x > 200) {
+        console.log("I am " + name + "!");
+      }
+    }
+  });
 
   return instance; // important!
 });
+
+jas.Entity.addEntity(jas.Entity.inst("player", {name: "jeff"}), "playerGroup");
 ```
 
 This is just a peak at some of the syntax and tools Jasper has to

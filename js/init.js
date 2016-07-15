@@ -4,15 +4,15 @@
 
   
   // animation
-  var then;
   var wn = window;
   var requestAnimationFrame = wn.requestAnimationFrame || wn.mozRequestAnimationFrame ||
    wn.msRequestAnimationFrame || wn.webkitRequestAnimationFrame || wn.oRequestAnimationFrame;
-   
+  var targetRate;
+  var timer;
    
   // STARTER FLUID METHODS
   // init method accepts id attribute of DOM game frame.
-  function init (frameId, w, h) {
+  function init (frameId, w, h, target) {
     function initError (err) {
       console.error(err);
     }
@@ -36,18 +36,21 @@
     gameFrame.appendChild(canvas);
     // init game states
     jas.State.initAllStates();
-
+    
+    targetRate = 1000/target || 1000/60;
+    timer = jas.Util.timer(targetRate, false);
   }
   
   function begin() {
-    then = Date.now();
+    timer.start();
     main();
   }
   
   function main() {
-    var now = Date.now() - then;
-    jas.State.updateState(now, Controller, Graphics);
     requestAnimationFrame(main);
+    timer.checkTime(function (time) {
+      jas.State.updateState(time, Controller, Graphics);
+    });
   }
   
   

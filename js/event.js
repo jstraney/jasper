@@ -1,6 +1,6 @@
 (function (jas) {
   var publications = {};
-
+  var subscriberAutoId = 0;
   function publication () {
     var subscribers = {};
     function subscriber (callback) {
@@ -19,6 +19,7 @@
         subscribers[subId] = subscriber(callback);
       },
       removeSubscriber: function (subId) {
+        subscribers[subId] = undefined;
         delete subscribers[subId];
       }
     }
@@ -26,20 +27,41 @@
   
   jas.Event = {
     addPublication: function (name) {
-      console.log(name);
+      //console.log(name);
       publications[name] = publication();
     },
-    remPublication: function (name) { // careful! destroys subscribers too
+    remPublication: function (name) {
+      publications[name] = undefined;
       delete publications[name];
     },
     subscribe: function (pubId, subId, callback) {
-      publications[pubId].addSubscriber(subId, callback);
+      var name;
+      if (arguments.length > 2) {
+        name = subId;
+        publications[pubId].addSubscriber(name, callback);
+      }
+      else if (typeof(subId) == "function") {
+        name = subId.name? subId.name: "sub-" + subscriberAutoId ++;
+        callback = subId;
+        publications[pubId].addSubscriber(name, callback);
+      }
+      console.log(name);
+      // return subscriber
+      return {
+        unsubscribe: function () {
+          console.log(name);
+          publications[pubId].removeSubscriber(name);
+        },
+        resubscribe: function () {
+          publications[pubId].addSubscriber(callback.name, callback);
+        }
+      };
     },
     unsubscribe: function (pubId, subId) {
       publications[pubId].removeSubscriber(subId);
     },
-    publish: function (pubId, event) {
-      publications[pubId].publish(event);
+    publish: function (pubId, payload) {
+      publications[pubId].publish(payload);
     }
   };
   

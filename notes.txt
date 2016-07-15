@@ -5,10 +5,6 @@ Entity
       - give widgets some kind of 'repack' method.
       - widgets should have layer entities that fit into rows.
       - once it's improved, make text label extend 'component'
-  * Label class
-      - the first widget
-      - widgets should be a component with nested components
-      - text is a component
   * add various shape classes that extend shape (really just a 'circ' class)
       - shapes should share an interface of calcArea, getCenter, contains, isColliding
       - shapes class is doing some weird recursive thing...
@@ -29,7 +25,12 @@ Asset
     - would check if assets are loaded and then fire a callback like 'changeGameState' or w/e
   
 State
+
+Controller
+  * rename events to be "UP_IS_DOWN" instead of "UP_DOWN", etc. This is confusing
   
   
 Graphics
   * extra fancy webGL things
+
+Physics
