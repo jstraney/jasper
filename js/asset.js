@@ -7,6 +7,18 @@
     maps: {}
   };
   
+  var imageRoot = "";
+  var audioRoot = "";
+  var mapRoot = "";
+  
+  
+  
+  function configure(mutator) {
+    imageRoot = mutator.imageRoot;
+    audioRoot = mutator.audioRoot;
+    mapRoot = mutator.mapRoot;
+  }
+  
   function getMapData(name, path, userCallback) {
     var map = {}; 
     
@@ -89,11 +101,32 @@
       console.error("error finding tmx file in newMap");
     };
     
-    request.open("get", path, true);
+    request.open("get", mapRoot + path, true);
     
     request.send();
     
       
+  }
+  
+  function newImageFromCanvas (name, path, userCallback) {
+    var image = new Image();
+    
+    
+    assets.images[name] = false;
+    /*global Image*/
+    
+    image.onload = function () {
+      assets.images[name] = image;
+      if (typeof(userCallback) == "function") {
+        userCallback(image);
+      }
+    };
+    
+    image.onerror = function (e) {
+      console.log(e);
+    };
+  
+    image.src = path;
   }
 
   function newImage(name, path, userCallback) {
@@ -114,7 +147,7 @@
       console.log(e);
     };
   
-    image.src = path;
+    image.src = imageRoot + path;
   
   }
   
@@ -126,12 +159,28 @@
     return assets.images[name]? true: false;
   }
 
-  function newAudio(name, path) {
-      
+  function newAudio(name, path, userCallback) {
+    assets.audio[name] = false;
+    userCallback = typeof(userCallback) == 'function'? userCallback: function () {};
+    var audio = new Howl ({
+      urls: [audioRoot+path],
+      onload: function () {
+        console.log(this);
+        userCallback(this);
+        assets.audio[name] = this;
+      }
+    });
   }
   
-  function getAudio (name) {
-    return assets.audio[name] || false;
+  function getAudio (name, callback) {
+    var audio = assets.audio[name];
+    console.log(audio);
+    if (typeof(callback)=='function' && audio) {
+      callback(audio);
+      return audio;
+    }
+    
+    return false;
   }
   
   function audioReady (name) {
@@ -160,8 +209,10 @@
   }
 
   jas.Asset = {
+    configure: configure,
     newImage: newImage,
-    audio: newAudio,
+    newImageFromCanvas: newImageFromCanvas,
+    newAudio: newAudio,
     getImage: getImage,
     getAudio: getAudio,
     getMapData: getMapData,

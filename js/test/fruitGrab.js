@@ -3,7 +3,15 @@ jas.State.addState("main",
   function init () {
     jas.Event.addPublication("main-state-reset");
     
-    jas.Asset.newImage("player", "res/images/player.png", function () {
+    jas.Asset.configure({
+      imageRoot: "res/images/",
+      audioRoot: "res/audio/",
+      mapRoot: "res/data/"
+    });
+    
+    jas.Asset.newAudio("pickup", "powerup.wav");
+    
+    jas.Asset.newImage("player", "player.png", function () {
       // When the image loads, define a player class
       jas.Entity.newClass("player", function (mutator) {
         var instance = this.sprite(mutator); // 'this' is jas.Entity
@@ -129,7 +137,8 @@ jas.State.addState("main",
     
     jas.Event.addPublication("pickUpFruit");
 
-    jas.Asset.newImage("fruit", "res/images/fruit.png", function () {
+    jas.Asset.newImage("fruit", "fruit.png", function () {
+      
       jas.Entity.newClass("fruit", function (mutator) {
         mutator = mutator || {};
         mutator.w = 32;
@@ -140,6 +149,10 @@ jas.State.addState("main",
         var points = mutator.points;
         
         instance.pickup = function() {
+          jas.Asset.getAudio('pickup', function (sound) {
+            console.log(sound);
+            sound.play();
+          });
           jas.Event.publish("pickUpFruit", {points: points, id: instance.id});
         };
 
@@ -255,7 +268,7 @@ jas.State.addState("main",
     
     jas.Event.addPublication("theyHaveCome");
     
-    jas.Asset.newImage("alien", "res/images/alien.png", function () {
+    jas.Asset.newImage("alien", "alien.png", function () {
       
       jas.Entity.newClass("alien", function (mutator) {
         mutator = mutator || {};
@@ -295,9 +308,9 @@ jas.State.addState("main",
     });
     
 
-    jas.Asset.getMapData("map", "res/data/map-alt.tmx", function (mapData) {
+    jas.Asset.getMapData("map", "map-alt.tmx", function (mapData) {
       // when the data is parsed get the image
-      jas.Asset.newImage("tiles", "res/images/tileSet.png", (function(){
+      jas.Asset.newImage("tiles", "tileSet.png", (function(){
         // when the image is done make an entity from the data
         mapData.imageId = "tiles";
         

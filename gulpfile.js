@@ -15,9 +15,10 @@ gulp.task("js", function () {
   return gulp.watch("js/*.js", function () {
     
     // src
-    gulp.src(["js/*.js", "js/lib/x2js-v1.1.5/xml2json.js"])
+    gulp.src(["js/*.js", "js/lib/howler/howler.js", "js/lib/x2js-v1.1.5/xml2json.js"])
       .pipe(order([
         "xml2json.js",
+        'howler.js',
         'jasper.js',
         'util.js',
         'event.js',

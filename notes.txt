@@ -20,7 +20,7 @@ Event
   
   
 Asset
-  * create audio asset
+  * integrate howler. use it to build audio asset
   * create an assetLoader?
     - would check if assets are loaded and then fire a callback like 'changeGameState' or w/e
   
