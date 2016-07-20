@@ -22,7 +22,7 @@
       
     }, false);
     
-    canvas.addEventListener('mouseup', function () {
+    canvas.addEventListener('mouseup', function (e) {
       if (controller.mousedown) {
         delete controller.mousedown;
         jas.Event.publish("MOUSE_IS_UP", e);

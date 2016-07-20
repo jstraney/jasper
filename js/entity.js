@@ -100,7 +100,7 @@
         var v1 = vector.x > instance.x;
         var v2 = vector.x < instance.x + instance.w;
         var v3 = vector.y > instance.y;
-        var v4 = verctor.y < instance.y + instance.h;
+        var v4 = vector.y < instance.y + instance.h;
         
         if (v1 && v2 && v3 && v4) {
           typeof(success)=="function"? success(): null;
@@ -357,7 +357,7 @@
         var url = tempCanvas.toDataURL();
 
         //save string as a png in Assets. Once loaded, change draw.
-        jas.Asset.newImage("text-image:"+instance.id, url, function (image) {
+        jas.Asset.newImageFromCanvas("text-image:"+instance.id, url, function (image) {
           document.appendChild(image);
           
           var draw = {
