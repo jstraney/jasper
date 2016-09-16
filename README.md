@@ -102,11 +102,14 @@ think rectangles are repulsive, you can make it a special rectangle:
 ```js
 //add this to game state's init
 jas.Entity.newClass("player", function(mutator) {
-  var instance = this.rect(mutator); // 'this' is 'jas.Entity'. we're
-  extending it
-  var name = mutator.name || "jasper"; // injected name. Here's one way to set a default.
+	// see Entity docs if this seems odd
+  var instance = this.rect(mutator);  
+  
+	// setting the players name. defaults to 'jasper'
+  var name = mutator.name || "jasper";
 
-  var spd = 1; // private to the player class
+	// private to the player class
+  var spd = 1;
 
   // this is idiomatic, as opposed to the last example
   jas.Controller.inst({
@@ -118,7 +121,8 @@ jas.Entity.newClass("player", function(mutator) {
     }
   });
 
-  return instance; // important!
+	// never forget to return instance
+  return instance;
 });
 
 jas.Entity.addEntity(jas.Entity.inst("player", {name: "jeff"}), "playerGroup");
