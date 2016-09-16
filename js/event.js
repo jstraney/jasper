@@ -26,13 +26,13 @@
   }
   
   jas.Event = {
-    addPublication: function (name) {
+    addPublication: function (pubId) {
       //console.log(name);
-      publications[name] = publication();
+      publications[pubId] = publication();
     },
-    remPublication: function (name) {
-      publications[name] = undefined;
-      delete publications[name];
+    remPublication: function (pubId) {
+      publications[pubId] = undefined;
+      delete publications[pubId];
     },
     subscribe: function (pubId, subId, callback) {
       var name;
@@ -53,7 +53,7 @@
           publications[pubId].removeSubscriber(name);
         },
         resubscribe: function () {
-          publications[pubId].addSubscriber(callback.name, callback);
+          publications[pubId].addSubscriber(name, callback);
         }
       };
     },

@@ -11,27 +11,34 @@
     jas.Event.addPublication("MOUSE_IS_PRESSED");
     jas.Event.addPublication("MOUSE_IS_DOWN");
     jas.Event.addPublication("MOUSE_IS_UP");
+    jas.Event.addPublication("MOUSE_IS_CLICKED");
+    
+    // time between down and up to be a 'click'
+    var clickDef = 100;
+    // timeout for click
+    var clickTimeout;
+    var clickTime;
     
     canvas.addEventListener('mousedown', function (e) {
-      if (controller.mouseup) {
-        delete controller.mouseup;
-        jas.Event.publish("MOUSE_IS_PRESSED", e);
-      }
-      controller.mousedown = true;
+      clickTime = Date.now();
+      
       jas.Event.publish("MOUSE_IS_DOWN", e);
+      
       
     }, false);
     
     canvas.addEventListener('mouseup', function (e) {
+      var upTime = Date.now();
+      
       if (controller.mousedown) {
         delete controller.mousedown;
         jas.Event.publish("MOUSE_IS_UP", e);
       }
-      controller.mouseup = true;
       
-      window.setTimeout(function () {
-        delete controller.mouseup;
-      }, 10);
+      controller.mouseup = true;
+
+      delete controller.mouseup;
+      
     }, false);
     
     var keys = {};
@@ -138,7 +145,7 @@
         // add subscribers to master controllers publications
         for (var pub in mutator) {
           var subscription = jas.Event.subscribe(pub, mutator[pub]);
-          subscriptions["jas-controller-" + controllerAutoId] = subscription;
+          subscriptions["jas-controller-" + pub] = subscription;
         }
       }
       

@@ -34,6 +34,7 @@
     Graphics = jas.graphicsFactory(canvas, ctx);
     
     gameFrame.appendChild(canvas);
+    
     // init game states
     jas.State.initAllStates();
     

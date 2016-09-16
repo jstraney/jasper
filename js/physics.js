@@ -19,9 +19,10 @@
       var update;
       
       instance.bind = function (entity) {
-        
-        update = function (dir, val) {
-          entity[dir] += val;
+        // all physics just modify some numeric property
+        // could in theory be torque, heat. most commonly x, y.
+        update = function (prop, val) {
+          entity[prop] += val;
         }
         instance.update = update;
       };
@@ -86,13 +87,29 @@
     // pinball-like physics
       var instance = classes.core(mutator);
       
-      instance.move = function (rad, val) {
-      // todo, do some trig to get x and y differences
+      var xVel, yVel = 0;
+      var lastX, lastY;
+      
+      instance.move = function (deg, val) {
+        // todo, do some trig to get x and y differences
+        
+        
+        instance.update('x', xVal);
+        instance.update('y', yVal);
       };
+      
+      instance.collide = function (val) {
+        
+      }
+      
+      instance.gravity = function (val) {
+        instance.update("y", val);
+      }
     },
     platformer: function (mutator) {
     // mario-like physics
       mutator = mutator || {};
+      
       var instance = classes.core();
       instance.left = function () {
         instance.update("x", -val);
@@ -106,7 +123,7 @@
         // logic for left and right collision
       };
       instance.jump = function (rad, val) {
-        
+
       };
       instance.gravity = function (val) {
         instance.update("y", val);

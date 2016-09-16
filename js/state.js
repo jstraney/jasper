@@ -3,38 +3,48 @@
   var stateAutoId = 0;
   
   var state = null;
+  
   // GAME STATES PUBLIC API
   function addState (stateName, init, update, render) {
+    
+    jas.Event.addPublication("enter-state-" + stateName);
+    jas.Event.addPublication("exit-state-" + stateName);
     
     states[stateName] = {
       stateName: stateName,
       init: init,
       update: update,
-      render: render
+      render: render,
+      changeState: changeState
     };
     
-    if (state == null) {
-      state = states[stateName];
-    }
+  }
+  
+  function changeState(stateId) {
+    
+    state = states[stateId];
+    
+    jas.Event.publish("exit-state-" + state.stateName);
+    jas.Event.publish("enter-state-" + stateId);
+
   }
   
   function updateState (now, Controller, Graphics) {
     state.update(now, Controller);
     state.render(Graphics); 
   }
-  
-  function changeState(stateId) {
-    state = states[stateId];
-  }
-  
-  function initAllStates() {
-    if (Object.keys(states).length == 0) {
-      initError("You must inject at least one game state using jas.addState\n");  
-    }
 
+  function initAllStates() {
+    
+    var first;
+    
     for (var i in states) {
+      first = first || i;
       states[i].init();
     } 
+    
+    changeState(first);
+    
   }
   
   function initState(stateName) {
@@ -43,10 +53,10 @@
   
   jas.State = {
     addState: addState,
-    changeState: changeState,
     initAllStates: initAllStates,
     initState: initState,
-    updateState: updateState
+    updateState: updateState,
+    changeState: changeState
   };
   
 })(jas);

@@ -9,7 +9,10 @@ jas.State.addState("main",
       mapRoot: "res/data/"
     });
     
-    jas.Asset.newAudio("pickup", "powerup.wav");
+    jas.Asset.newAudio("pickup", "powerup.wav", function (audio) {
+      // configure the audio once it's loaded.
+      audio._volume = .5; // turn it down a little
+    });
     
     jas.Asset.newImage("player", "player.png", function () {
       // When the image loads, define a player class
@@ -78,7 +81,7 @@ jas.State.addState("main",
         
         var doDamage = jas.Event.subscribe("playerHit", function (obj) {
           // stop key events
-          controller.kill(); // player controller should not work.
+          controller.kill();
           instance.setAnim("die");
           // change game state to game over
         });
@@ -88,7 +91,9 @@ jas.State.addState("main",
           instance.y = 32;
           dirY = 0;
           dirX = 0;
-          instance.setAnim("sd"); 
+          instance.setAnim("sd");
+          // reset death animation so 'onend' can be called again
+          instance.resetAnim('die');
           controller.revive(); // resume use of controller
         });
         
@@ -105,6 +110,7 @@ jas.State.addState("main",
         h: 32,
         imageId: "player",
         animations: [
+          // 'sd' stand facing down, 'wd' walk facing down etc.
           { name: "sd", start: 0, stop: 1, def: true}, 
           { name: "wd", start: 0, stop : 8, looping: true},
           { name: "wu", start: 8, stop : 16, looping: true},
@@ -127,7 +133,9 @@ jas.State.addState("main",
                   h: dimensions.h
                 }), "screenShot");
               });
+              
               jas.State.changeState("gameOver");
+              
             }
           }
         ]
@@ -150,7 +158,6 @@ jas.State.addState("main",
         
         instance.pickup = function() {
           jas.Asset.getAudio('pickup', function (sound) {
-            console.log(sound);
             sound.play();
           });
           jas.Event.publish("pickUpFruit", {points: points, id: instance.id});
@@ -192,7 +199,8 @@ jas.State.addState("main",
         spawnRate: 3000,
         spawnPosition: "random",
         spawnMax: 5,
-        spawnGroup: "fruit"
+        spawnGroup: "fruit",
+        active: true
       });
       
       var clearFruit = jas.Event.subscribe("main-state-reset", function () {
@@ -200,6 +208,7 @@ jas.State.addState("main",
       });
       
       var addScore = jas.Event.subscribe("pickUpFruit", function (fruit) {
+        console.log(fruit);
         scoreBoard.addScore(fruit.points);
       });
       
@@ -210,13 +219,14 @@ jas.State.addState("main",
       jas.Entity.addEntity( fruitSpawnZone, "spawnZones");
       
       // Score class. Extends the label class.
-      jas.Entity.newClass("score", function (mutator) {
+      jas.GUI.newClass("score", function (mutator) {
         var score = 0;
         
         mutator = mutator || {};
-        mutator.string = mutator.string || "score: " + score;
+        mutator.text = mutator.text || "score: " + score;
+				mutator.classes = "fruitgrab-label score";
+
         var instance = this.label(mutator); // extend label class
-        
         
         var areThereAliens = false;
         
@@ -228,7 +238,6 @@ jas.State.addState("main",
           score += val;
           if (score > 500 && !areThereAliens) {
             jas.Event.publish("theyHaveCome");
-            addScore.unsubscribe();
             areThereAliens = true;
           }
           if (score > 300) {
@@ -240,30 +249,28 @@ jas.State.addState("main",
           }
           
           // change text is from label
-          instance.changeLabelText(function (oldString) {
+          instance.changeText(function (oldString) {
             // you could manipulate oldString if you wanted to
-            return "score: " + score; // return the new one
+            return "score: " + score;
+            
           });
+          
         };
         
         var resetScore = jas.Event.subscribe("main-state-reset", "resetScore", function () {
           score = 0;
-          instance.addScore(0); // resets text
+          areThereAliens = false;
+          // resets text
+          instance.addScore(0);
+          fruitSpawnZone.configureSpawn("cherry", {w:32, h:32});
         });
         
         return instance;
+        
       });
       
-      var scoreBoard = jas.Entity.inst("score", {
-        x: 15,
-        y: 15,
-        w: 50,
-        h: 30,
-        shapeColor: "#000",
-        shapeAlpha: .5 
-      });
+      var scoreBoard = jas.GUI.inst("score", {context: "game-frame"});
       
-      jas.Entity.addEntity(scoreBoard, "score");
     });
     
     jas.Event.addPublication("theyHaveCome");
@@ -276,6 +283,7 @@ jas.State.addState("main",
         mutator.w = 32;
         var spd = 1;
         mutator.h = 32;
+        
         var instance = this.sprite(mutator);
         
         jas.Event.subscribe("playerLocation", "getPath-" + instance.id, function (pCord) {
@@ -284,7 +292,9 @@ jas.State.addState("main",
         });
         
         return instance;
+        
       });
+      
     });
     
     var alienSpawnZone = jas.Entity.inst("spawnZone", {
@@ -301,9 +311,11 @@ jas.State.addState("main",
     
     jas.Event.subscribe("theyHaveCome", "addAlienSpawnZone", function () {
       jas.Entity.addEntity(alienSpawnZone, "spawnZones");
+      alienSpawnZone.start();
     });
     
     jas.Event.subscribe("main-state-reset", "clear-aliens", function () {
+      alienSpawnZone.stop();
       alienSpawnZone.clear();
     });
     
@@ -387,9 +399,6 @@ jas.State.addState("main",
     Graphics.renderGroup("mobs");
     Graphics.renderGroup("player");
     Graphics.renderGroupLayer("map", "walls");
-    Graphics.renderGroup("score", "container");
-    Graphics.renderGroupLayer("score", "text");
-    //Graphics.renderGroup("test");
   }
 );
 
@@ -397,44 +406,33 @@ jas.State.addState("main",
 // Game Over State
 jas.State.addState("gameOver",
   function init () {
+    
     var resetMain = jas.Event.subscribe("main-state-reset", function () {
-      jas.State.setState("main");
+      jas.State.changeState("main");
     });
     
-    jas.Entity.addEntity(jas.Entity.inst("text", {
-      string: "Game Over...",
-      font: "18px Arial",
-      color: "#fff",
-      x: 110,
-      y: 150
-    }), "gui");
-    
-    jas.Entity.newClass("button", function (mutator) {
-      var click = mutator.click;
-      
-      var instance = this.label(mutator);
-      
-      controller = jas.Controller.inst("controller", {
-        "MOUSE_IS_UP": function (e) {
-          instance.contains({x: e.clientX, y: e.clientY}, click);
-        }
-      });
-      
-      return instance;
+    var menu = jas.GUI.inst("widget", {
+      context: "game-frame",
+      classes: "full-pane",
+      show: "enter-state-gameOver",
+      hide: "exit-state-main"
     });
     
-    jas.Entity.addEntity(jas.Entity.inst("button", {
-      string: "retry",
-      font: "16px Arial",
-      color: "#fff",
-      x: 110,
-      y: 180,
-      w: 50,
-      h: 20,
-      click: function () {
+    var text = jas.GUI.inst("label", {
+      classes: "fruitgrab-label game-over",
+      text: "Game Over"
+    });
+
+
+    var button = jas.GUI.inst("textButton", {
+      classes: "fruitgrab-button continue",
+      text: "continue",
+      MOUSE_IS_CLICKED: function () {
         jas.Event.publish("main-state-reset");
       }
-    }), "gui");
+    });
+    
+    menu.appendComponents(text, button);
     
   },
   
@@ -444,7 +442,6 @@ jas.State.addState("gameOver",
   
   function render (Graphics) {
     Graphics.renderGroup("screenShot");
-    Graphics.renderGroup("gui");
   }
 );
 

@@ -1,5 +1,71 @@
-@pallete-1 : #440077;
+@pallete-1 : #ACACCB;
 
 body {
   background-color: @pallete-1;
+}
+
+#game-frame {
+  position: relative;
+}
+
+.label {
+  font-size: 1.2em;
+  font-family: arial;
+  background-color: #dddddd;
+}
+
+.test {
+  border: solid 3px #eeeeee;
+}
+
+.component {
+  font-family: "helvetica neue", verdana, arial, sans-serif;
+  font-size: 1em;
+  color: #D7D7EF;
+  user-select: none;
+  position: absolute;
+}
+
+.fruitgrab-label {
+  .component;
+  padding: 5px;
+}
+
+
+.fruitgrab-button {
+  .component;
+  border: double 5px #888;
+  padding: 5px; 
+  border-radius: 200px;
+}
+
+.score {
+  top: 10px;
+  left: 10px;
+  border: double 5px #888;
+}
+
+.continue {
+  top: 130px;
+  border: double 5px #888;
+}
+
+.game-over {
+  top: 100px;
+}
+
+.continue, .game-over{
+  left: 80px;
+  width: 150px;
+  text-align: center;
+}
+
+.continue:hover {
+  color: #888;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.clicked {
+  background-color: #999 !important;
 }

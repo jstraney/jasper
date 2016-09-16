@@ -1921,6 +1921,15 @@ function X2JS(config) {
 
 var jas = {};
 (function (jas) {
+  
+  function isFunction (fn) {
+    if (typeof(fn) == "function")
+      return true;
+    
+    false; 
+  
+  }
+  
   function timerFactory(interval, isRandom) {
     var then;
     var done;
@@ -2089,6 +2098,7 @@ var jas = {};
   
   
   jas.Util = {
+    isFunction: isFunction,
     timer: timerFactory,
     finiteStateMachine: finiteStateMachine,
     Graph: Graph
@@ -2122,13 +2132,13 @@ var jas = {};
   }
   
   jas.Event = {
-    addPublication: function (name) {
+    addPublication: function (pubId) {
       //console.log(name);
-      publications[name] = publication();
+      publications[pubId] = publication();
     },
-    remPublication: function (name) {
-      publications[name] = undefined;
-      delete publications[name];
+    remPublication: function (pubId) {
+      publications[pubId] = undefined;
+      delete publications[pubId];
     },
     subscribe: function (pubId, subId, callback) {
       var name;
@@ -2149,7 +2159,7 @@ var jas = {};
           publications[pubId].removeSubscriber(name);
         },
         resubscribe: function () {
-          publications[pubId].addSubscriber(callback.name, callback);
+          publications[pubId].addSubscriber(name, callback);
         }
       };
     },
@@ -2162,6 +2172,7 @@ var jas = {};
   };
   
 })(jas);
+
 // global namespace jas
 (function (jas) {
   
@@ -2308,7 +2319,7 @@ var jas = {};
     };
     
     image.onerror = function (e) {
-      console.log(e);
+      //console.log(e);
     };
   
     image.src = imageRoot + path;
@@ -2329,7 +2340,6 @@ var jas = {};
     var audio = new Howl ({
       urls: [audioRoot+path],
       onload: function () {
-        console.log(this);
         userCallback(this);
         assets.audio[name] = this;
       }
@@ -2338,7 +2348,7 @@ var jas = {};
   
   function getAudio (name, callback) {
     var audio = assets.audio[name];
-    console.log(audio);
+    //console.log(audio);
     if (typeof(callback)=='function' && audio) {
       callback(audio);
       return audio;
@@ -2392,6 +2402,8 @@ var jas = {};
   
   var entityAutoId = 0;
   
+  var isFunction = jas.Util.isFunction;
+  
   var classes = {
     entity: function (mutator) {
       var instance = {};
@@ -2439,8 +2451,8 @@ var jas = {};
     },
     rect: function (mutator) {
       var instance = this.entity(mutator);
-      var color = mutator.color || null;
-      var alpha = mutator.alpha != null? mutator.alpha: null;
+      var color = mutator.color || '#fff';
+      var alpha = mutator.alpha != undefined? mutator.alpha: null;
       
       instance.getOrigin = function () {
         return {x: instance.x, y: instance.y};
@@ -2546,7 +2558,7 @@ var jas = {};
     // call it a proxy-class if you will. This relays to a different class depending on values in mutator
     shape : function (mutator) {
       var instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
-      instance.shape = mutator.shape;
+      instance.shape = mutator.shape || 'rect';
       var collideable = mutator.collideable? mutator.collideable: true;
       instance.setState("collideable", collideable);   // using class entity's FSM 
       
@@ -2577,6 +2589,7 @@ var jas = {};
       }
       
       instance.addLayer = function (layerId, arr) {
+        console.log(layerId, arr);
         var layer = arr || []
         layers[layerId] = layer;
       }
@@ -2591,274 +2604,79 @@ var jas = {};
       };
 
       instance.getDraw = function () {
+        //console.log(instance.layers);
+        
         return {
           type: "complex",
-          layers: instance.layers
+          layers: layers
         };
       }
       
       return instance;
       
-    },
-    // todo: make a GUI component class
-    component: function (mutator) {
-      var instance = classes.composite(mutator);
-      
-      var parent;
-      // a widget will be a component that contains components
-      
-      
-      return instance;
-    },
-    widget: function (mutator) {
-      mutator.shape = mutator.shape || "rect";
-      var instance = classes.component(mutator);
-      var padding = mutator.padding || 5;
-            
-      
-      var rows = [];
-      instance.addRow = function (callback) {
-        function rowFactory () {
-          var row = [];
-          row.w = 0;
-          row.h = 0;
-          row.addEntity = function (entity) {
-            row.push(entity.id);
-          };
-          row.getEntityDimensions = function (col) {
-            var dimensions = {};
-            var entity = entities[row[col]];
-            dimensions.w = entity.w;
-            dimensions.h = entity.h;
-            return dimensions;
-          };
-          
-          return row;
-        }
-        
-        var row = rowFactory();
-        rows.push(row);
-        if (typeof(callback) == "function") {
-          callback(row);
-        }
-      };
-      
-      instance.pack = function () {
-        // minimum size for parent container
-        function fillWidget () {
-          var maxW = 0;
-          var maxH = 0;
-          for (var i in rows) {
-            var row = rows[i];
-            row.w = 0; // reset these things
-            row.h = 0;
-            row.col = 0;
-            for (var j in row) {
-              row.col++; // calculate row
-              var entity = row[j];
-              row.w += entity.w;
-              row.h = entity.h > row.h? entity.h: row.h;
-            }
-            // apply padding. change widget width and height
-            row.h += (i + 1) * padding;
-            row.w += (row.col + 1) * padding;
-            maxW = row.w > maxW? row.w: maxW;
-            maxH += row.h;
-          }
-          instance.w = maxW;
-          instance.h = maxH;
-        }
-        
-        function placeComponents() {
-          var y = instance.y + padding;
-          for (var i in rows) {
-            var row = rows[i];
-            var x = instance.x + padding;
-            for (var j in row) {
-              var onColNum = 0;
-              var colW = row.col / instance.w;
-              
-              var entityId = row[j];
-              entites[entityId].x = x;
-              entites[entityId].y = y;
-              x = colW * onColNum + padding;
-            }
-            y += row.h + padding;
-          }
-        }
-        
-        fillWidget();
-        placeComponents();
-      };
-      
-      return instance;
-    },
-    text: function (mutator) {
-      mutator = mutator || {};
-      var color = mutator.color || "#fff";
-      var alpha = mutator.color || 1;
-      var font = mutator.font || "1em arial";
-      var string = mutator.string;
-      var instance = classes.sprite(mutator);
-      
-      
-      instance.changeText = function (callback) {
-        if ( typeof(callback) == "function") {
-          string = callback(string);
-        }
-        makeTextImage(); // reset image
-      };
-
-      instance.getDraw = function () {
-        return {
-          type: "text",
-          x: instance.x,
-          y: instance.y,
-          string: string,
-          color: color,
-          alpha: alpha,
-          font: font
-        };
-      };
-      
- 
-      // saving text to an image is more efficient than re-rendering text via canvas.
-      function makeTextImage() {
-        var tempCanvas = document.createElement("canvas");
-        tempCanvas.width = 50;
-        tempCanvas.height = 50;
-        var ctx = tempCanvas.getContext("2d");
-        
-        var dimensions = ctx.measureText(string);
-        tempCanvas.width = dimensions.width;
-        tempCanvas.height = 50;
-        
-        
-        ctx.font = font;
-        ctx.fillStyle = color;
-        ctx.globalAlpha = alpha;
-        
-        
-        ctx.fillText(string, 0, 10);
-        var url = tempCanvas.toDataURL();
-
-        //save string as a png in Assets. Once loaded, change draw.
-        jas.Asset.newImageFromCanvas("text-image:"+instance.id, url, function (image) {
-          document.appendChild(image);
-          
-          var draw = {
-            type: "sprite",
-            frame: {
-              sx: 0,
-              sy: 0,
-              sw: tempCanvas.width,
-              sh: tempCanvas.height,
-              x: instance.x,
-              y: instance.y,
-              w: tempCanvas.width,
-              h: tempCanvas.height
-            },
-            imageId: url
-          };
-          
-          instance.getDraw = function () {
-            return draw;
-          };
-
-        });
-      }
-      
-      makeTextImage();
-      
-      
-      return instance;
-    },
-    label : function (mutator) {
-      mutator = mutator || {};
-      
-      var instance = classes.component(mutator);
-      
-      var textMutator = mutator.text || {};
-      
-      var x = mutator.x;
-      var y = mutator.y;
-      var w = mutator.w;
-      var h = mutator.h;
-      
-      var text = classes.text({
-        string: mutator.string,
-        x: x,
-        y: y + h,
-        w: w,
-        h: h,
-        color: mutator.textColor,
-        alpha: mutator.textAlpha  
-      });
-      
-      //var frame = classes.rect(mutator.frame);
-      var shapeMutator = mutator.shape || {};
-      var shapeType = shapeMutator.type || "rect";
-
-      var container = classes.rect({
-        x: x,
-        y: y,
-        w: w,
-        h: h,
-        color: mutator.shapeColor,
-        alpha: mutator.shapeAlpha  
-      });
-      
-      //console.log(container);
-      instance.addLayers({
-        text: [text],
-        container:[container]
-      });
-      
-
-      instance.changeLabelText = function (callback) {
-        instance.getLayer("text")[0].changeText(callback);
-      };
-      
-      return instance;
     },
     sprite : function (mutator) {
+      // sprites support layers, so they are composite
       var instance = this.composite(mutator);
       
+      // inner factory
       function animationFactory(animMutator) {
-        // inner frame class
+        
+        // inner frame factory
         function frame (sx, sy, sw, sh) {
+          
           return {
             sx: sx,
             sy: sy,
             sw: sw,
             sh: sh
           };
+          
         }
         
+        // mutator for animation, separate from sprite mutator
         animMutator = animMutator? animMutator: {};
+        
         var animation = {};
         
+        // animations have names
         animation.name = animMutator.name;
         
+        // frames are determined using modular arithmetic
+        // based on the sprite sheet size. It's not possible
+        // to 'skip' frames in the sheet.
+        // frame from sprite sheet where animation starts
         var start = animMutator.start;
+        // frame on the sheet where the animation stops
         var stop = animMutator.stop;
-        var w = instance.w;// sub image w & h
+        // width of the animation
+        var w = instance.w;
         var h = instance.h;
         
+        // does it loop? no by default
         var looping = animMutator.looping? animMutator.looping: false;
+        // does it play forwards, and then backwards? no by default
         var pingpong = animMutator.pingpong? animMutator.pingpong: false;
         var fps = animMutator.fps? animMutator.fps: 12;
-        
+        // frames for the animation
         var frames = [];
+        
+        // iterate from the start value, up to stop value exclusive
         for ( var i = start; i < stop; i++) {
+          // using modular arithmetic to find the x of sub image 
           var x = (i * w) % imageW;
+          // using division to find the y value of sub image
           var y = Math.floor((i * w) / imageW) * h;
+          // create a frame (sub image) with the x y.
           frames.push(frame(x, y, w, h));
         }
         
+        // set default (ending) frame, set by user. default to last frame
         var defaultFrame = animMutator.defaultFrame || frames.length - 1;
         
-        animation.onend = animMutator.onend;
+        // callback when animation is over
+        var onenterframe = animMutator.onenterframe;
+        var onend = animMutator.onend;
         
         //console.log(stop);
         var currentFrame = 0;
@@ -2868,11 +2686,19 @@ var jas = {};
         timer.start();
 
         animation.update = function () {
+          
           if (done) {
             return; 
           }
+          
+          // if it's time to change the frame...
           timer.checkTime(function() {
+            
+            // increment the frame
             var lastFrame = ++currentFrame >= frames.length;
+            
+            // calls onenterframe only if it is set
+            onenterframe && onenterframe(currentFrame);
             
             if (lastFrame && looping) {
               currentFrame = 0;
@@ -2880,43 +2706,55 @@ var jas = {};
             
             else if (lastFrame) {
               currentFrame = defaultFrame || frames.length - 1;
-              if (typeof(animation.onend) == "function") {
-                animation.onend();
-              }
+              // only call onend if it exists
+              onend && onend();
+              
               done = true
             }
           });
         };
         
+        // get current frame
         animation.getCurrentFrame = function () {
           return frames[currentFrame];
         };
         
+        // reset animation
         animation.reset = function() {
           currentFrame = 0;
           done = false;
         };
         
+        // is it the default animation?
         if (animMutator.def) {
           instance.anim = animation;
         }
+        
         return animation;
+        
       }
+      // end animation class
       
-      
+      // sprite sheet used for sprite
       var imageId = mutator? mutator.imageId: null;
+      
+      // sprite sheet width and height
       var imageW = jas.Asset.getImage(imageId).width;
       var imageH = jas.Asset.getImage(imageId).height;
       
+      // sprites animation
       instance.animations = {};
       
+      // if there are no animations in the mutator, use a still image
       mutator.animations = mutator.animations || [{name:"still", start: 0, stop: 1, def: true}];
       
+      // build animations using each mutator
       for (var i in mutator.animations) {
         var animData = mutator.animations[i];
         instance.animations[animData.name] = animationFactory(animData);
       }
       
+      // sets the default animation
       instance.setAnim = function (animId) {
         instance.anim = instance.animations[animId];
       };
@@ -2938,7 +2776,7 @@ var jas = {};
       
       instance.resetAnim = function (animId) {
         if (animId) {
-          instance.animation[animId].reset();
+          instance.animations[animId].reset();
         }
         else {
           instance.anim.reset();
@@ -2977,6 +2815,7 @@ var jas = {};
       var spawnGroup = mutator.spawnGroup || null;
       var spawnMax = mutator.spawnMax || 10;
       var spawnIds = {};
+      var active = mutator.active || false;
       
       var timer = jas.Util.timer(spawnRate, intervalFixed);
       timer.start();
@@ -3014,8 +2853,8 @@ var jas = {};
         getSpawnVector = getSpawnStrategy();  
       };
       
-      instance.spawn = (function () {
-        if (spawnCount < spawnMax) {
+      instance.spawn = function () {
+        if (spawnCount < spawnMax && active) {
           timer.checkTime(function() {
             var vector = getSpawnVector();
             spawnMutator.x = vector.x;
@@ -3027,7 +2866,15 @@ var jas = {};
             
           });
         }
-      });
+      };
+      
+      instance.start = function () {
+        active = true;
+      };
+      
+      instance.stop = function () {
+        active = false;
+      }
       
       instance.removeSpawn = function (entity) {
         delete spawnIds[entity.id];
@@ -3039,6 +2886,13 @@ var jas = {};
         delete spawnIds[id];
         jas.Entity.removeEntityById(id);
         spawnCount--;
+      };
+      
+      instance.clear = function () {
+        for (var i in spawnIds) {
+          var id = spawnIds[i];
+          instance.removeSpawnById(id);
+        }
       };
       
       return instance;
@@ -3194,6 +3048,7 @@ var jas = {};
   };
   
 })(jas);
+
 (function (jas) {
   // controllers communicate to entities
   var controllerAutoId = 0;
@@ -3207,27 +3062,34 @@ var jas = {};
     jas.Event.addPublication("MOUSE_IS_PRESSED");
     jas.Event.addPublication("MOUSE_IS_DOWN");
     jas.Event.addPublication("MOUSE_IS_UP");
+    jas.Event.addPublication("MOUSE_IS_CLICKED");
+    
+    // time between down and up to be a 'click'
+    var clickDef = 100;
+    // timeout for click
+    var clickTimeout;
+    var clickTime;
     
     canvas.addEventListener('mousedown', function (e) {
-      if (controller.mouseup) {
-        delete controller.mouseup;
-        jas.Event.publish("MOUSE_IS_PRESSED", e);
-      }
-      controller.mousedown = true;
+      clickTime = Date.now();
+      
       jas.Event.publish("MOUSE_IS_DOWN", e);
+      
       
     }, false);
     
     canvas.addEventListener('mouseup', function (e) {
+      var upTime = Date.now();
+      
       if (controller.mousedown) {
         delete controller.mousedown;
         jas.Event.publish("MOUSE_IS_UP", e);
       }
-      controller.mouseup = true;
       
-      window.setTimeout(function () {
-        delete controller.mouseup;
-      }, 10);
+      controller.mouseup = true;
+
+      delete controller.mouseup;
+      
     }, false);
     
     var keys = {};
@@ -3334,7 +3196,7 @@ var jas = {};
         // add subscribers to master controllers publications
         for (var pub in mutator) {
           var subscription = jas.Event.subscribe(pub, mutator[pub]);
-          subscriptions["jas-controller-" + controllerAutoId] = subscription;
+          subscriptions["jas-controller-" + pub] = subscription;
         }
       }
       
@@ -3541,38 +3403,48 @@ var jas = {};
   var stateAutoId = 0;
   
   var state = null;
+  
   // GAME STATES PUBLIC API
   function addState (stateName, init, update, render) {
+    
+    jas.Event.addPublication("enter-state-" + stateName);
+    jas.Event.addPublication("exit-state-" + stateName);
     
     states[stateName] = {
       stateName: stateName,
       init: init,
       update: update,
-      render: render
+      render: render,
+      changeState: changeState
     };
     
-    if (state == null) {
-      state = states[stateName];
-    }
+  }
+  
+  function changeState(stateId) {
+    
+    state = states[stateId];
+    
+    jas.Event.publish("exit-state-" + state.stateName);
+    jas.Event.publish("enter-state-" + stateId);
+
   }
   
   function updateState (now, Controller, Graphics) {
     state.update(now, Controller);
     state.render(Graphics); 
   }
-  
-  function changeState(stateId) {
-    state = states[stateId];
-  }
-  
-  function initAllStates() {
-    if (Object.keys(states).length == 0) {
-      initError("You must inject at least one game state using jas.addState\n");  
-    }
 
+  function initAllStates() {
+    
+    var first;
+    
     for (var i in states) {
+      first = first || i;
       states[i].init();
     } 
+    
+    changeState(first);
+    
   }
   
   function initState(stateName) {
@@ -3581,10 +3453,10 @@ var jas = {};
   
   jas.State = {
     addState: addState,
-    changeState: changeState,
     initAllStates: initAllStates,
     initState: initState,
-    updateState: updateState
+    updateState: updateState,
+    changeState: changeState
   };
   
 })(jas);
@@ -3624,6 +3496,7 @@ var jas = {};
     Graphics = jas.graphicsFactory(canvas, ctx);
     
     gameFrame.appendChild(canvas);
+    
     // init game states
     jas.State.initAllStates();
     
@@ -3649,6 +3522,264 @@ var jas = {};
   
     
 })(jas);
+(function (jasper) {
+  var UP = 0,
+      OVER = 1,
+      DOWN = 2,
+      ACTIVE = 3;
+  
+  
+  // gui components are like entities, and treated as such
+  // but are in fact DOM elements
+  function elem (type) {
+    return document.createElement(type);
+  }
+  
+  function getById(id) {
+    return document.getElementById(id);
+  }
+  
+  var classes = {
+    component: function (mutator) {
+      mutator = mutator || {};
+      
+      var classes = {};
+      // html classes
+      var elemClasses = mutator.classes || "";
+      
+      // html style attribute. will override class css
+      var elemStyle = mutator.style || "";
+      
+      var instance = elem("div");
+      
+      // the parent dom container for the component
+      // usually this is another widget, but in the case
+      // of widgets, it can be your game container, or
+      // another element outside of it.
+      if (mutator.context) {
+        var context = getById(mutator.context);
+        context.appendChild(instance);
+      }
+      
+      
+      function addClass (classStr) {
+        if (!classes[classStr])
+          instance.className += classStr + " ";
+        classes[classStr] = true;
+      }
+      
+      function addClasses (classArr) {
+        for (var i in classArr) {
+          var classStr = classArr[i];
+          addClass(classStr);
+        }
+      }
+      
+      function setClasses (classListStr) {
+        var classArr = classListStr.split(" ");
+        
+        instance.className = "";
+        addClasses(classArr);
+      }
+
+      
+      // styling should be done by CSS such as positioning
+      // color, font, etc. Events are handled by js
+      setClasses(elemClasses);
+      
+      instance.setClasses = setClasses;
+      
+      instance.addClass = addClass;
+      
+      instance.addClasses = addClasses;
+      
+      instance.setAttribute("style", elemStyle);
+
+      instance.removeClass = function (sansClass) {
+        
+        classStr = "";
+        
+        delete classes[sansClass];
+        
+        for (var i in classes) {
+          classStr += i + " ";
+        }
+        
+        instance.setAttribute("class", classStr);
+        
+      };
+      
+      var display = instance.style.display;
+      
+      instance.hide = function () {
+        instance.style.display = "none";
+      };
+      
+      if (mutator.hide) {
+        var hide = jas.Event.subscribe(mutator.hide, function () {
+          instance.hide();
+        });
+      }
+      
+      instance.show = function () {
+        instance.style.display = display;   
+      };
+
+      if (mutator.show) {      
+        var show = jas.Event.subscribe(mutator.show, function () {
+          instance.show();
+        });
+      }
+      
+
+      return instance;
+            
+    },
+    widget: function (mutator) {
+      var instance = classes.component(mutator);
+      
+      instance.appendComponents = function (components) {
+        for (var i in arguments) {
+          var component = arguments[i];
+          instance.appendChild(component);  
+        }
+      }
+      
+      return instance;
+      
+    },
+    label : function (mutator) {
+      var instance = classes.component(mutator);
+      var text = mutator.text;
+      instance.innerText = text;
+      
+      function changeText (fn) {
+        if (jas.Util.isFunction(fn)) {
+          // use callback to assign text
+          text = fn(text);
+          // update dom
+          instance.innerText = text;
+        }
+      }
+
+			instance.changeText = changeText;
+
+			return instance;
+      
+    },
+    button : function (mutator) {   
+      var changeState = mutator.changeState;
+
+      var instance = classes.component(mutator);
+      
+      var MOUSE_IS_CLICKED = mutator.MOUSE_IS_CLICKED,
+          MOUSE_IS_UP = mutator.MOUSE_IS_UP,
+          MOUSE_IS_DOWN = mutator.MOUSE_IS_DOWN,
+          MOUSE_IS_OVER = mutator.MOUSE_IS_OVER,
+          MOUSE_IS_OUT = mutator.MOUSE_IS_OUT;
+      
+      // add event listener if a callback is found
+      if (MOUSE_IS_CLICKED) {
+        instance.addEventListener("click", function () {
+          MOUSE_IS_CLICKED();
+        }, false);
+      }
+        
+      // a button is usually going to have some kind of
+      // state change on mouse interaction, so these are
+      // added by default. If you don't like this, you can
+      // extend the component class.
+      instance.addEventListener("mouseup", function () {
+        changeState(UP);
+        if (MOUSE_IS_UP) {
+          MOUSE_IS_UP();
+        }
+      }, false);
+      
+        
+      
+      instance.addEventListener("mousedown", function () {
+        changeState(DOWN);
+        if (MOUSE_IS_DOWN) {
+          MOUSE_IS_DOWN();
+        }
+      }, false);
+      
+      
+      
+      instance.addEventListener("mouseover", function () {
+        changeState(OVER);
+        if (MOUSE_IS_OVER) {
+          MOUSE_IS_OVER();
+        }
+      }, false);
+      
+      instance.addEventListener("mouseout", function () {
+        changeState(UP);
+        if (MOUSE_IS_OUT) {
+          MOUSE_IS_OUT();
+        }
+      }, false);
+      
+      
+      return instance;
+    },
+    textButton : function (mutator) {
+      var text = mutator.text || "";
+      var overText = mutator.overText || text;
+      var downText = mutator.downText || text;
+      
+      mutator.changeState = function (state) {
+        if (state == UP) {
+          instance.innerText = text;
+        }
+        else if (state == OVER) {
+          instance.innerText = overText;
+        }
+        else if (state == DOWN) {
+          instance.innerText = downText;
+        }
+      };
+      
+      var instance = classes.button(mutator);
+      
+      instance.innerText += text;
+      
+      return instance;
+      
+    },
+    imgButton : function (mutator) {
+      
+      var instance = classes.button(mutator);
+      
+      
+      return instance;
+    }
+    
+  };
+
+  function inst (type, mutator) {
+    if (jasper.Util.isFunction(classes[type])) {
+      return classes[type](mutator);
+    }
+  }
+
+	function newClass (type, callback) {
+    if (jasper.Util.isFunction(callback)) {
+      classes[type] = callback;
+		}
+	}
+
+  jasper.GUI = {
+    UP: UP,
+    OVER: OVER,
+    DOWN: DOWN,
+    inst: inst,
+		newClass: newClass
+  };
+
+})(jas);
+
 (function (jas) {
   
   var physicsAutoId = 0;
@@ -3670,9 +3801,10 @@ var jas = {};
       var update;
       
       instance.bind = function (entity) {
-        
-        update = function (dir, val) {
-          entity[dir] += val;
+        // all physics just modify some numeric property
+        // could in theory be torque, heat. most commonly x, y.
+        update = function (prop, val) {
+          entity[prop] += val;
         }
         instance.update = update;
       };
@@ -3737,13 +3869,29 @@ var jas = {};
     // pinball-like physics
       var instance = classes.core(mutator);
       
-      instance.move = function (rad, val) {
-      // todo, do some trig to get x and y differences
+      var xVel, yVel = 0;
+      var lastX, lastY;
+      
+      instance.move = function (deg, val) {
+        // todo, do some trig to get x and y differences
+        
+        
+        instance.update('x', xVal);
+        instance.update('y', yVal);
       };
+      
+      instance.collide = function (val) {
+        
+      }
+      
+      instance.gravity = function (val) {
+        instance.update("y", val);
+      }
     },
     platformer: function (mutator) {
     // mario-like physics
       mutator = mutator || {};
+      
       var instance = classes.core();
       instance.left = function () {
         instance.update("x", -val);
@@ -3757,7 +3905,7 @@ var jas = {};
         // logic for left and right collision
       };
       instance.jump = function (rad, val) {
-        
+
       };
       instance.gravity = function (val) {
         instance.update("y", val);

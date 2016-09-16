@@ -6,6 +6,8 @@
   
   var entityAutoId = 0;
   
+  var isFunction = jas.Util.isFunction;
+  
   var classes = {
     entity: function (mutator) {
       var instance = {};
@@ -53,8 +55,8 @@
     },
     rect: function (mutator) {
       var instance = this.entity(mutator);
-      var color = mutator.color || null;
-      var alpha = mutator.alpha != null? mutator.alpha: null;
+      var color = mutator.color || '#fff';
+      var alpha = mutator.alpha != undefined? mutator.alpha: null;
       
       instance.getOrigin = function () {
         return {x: instance.x, y: instance.y};
@@ -160,7 +162,7 @@
     // call it a proxy-class if you will. This relays to a different class depending on values in mutator
     shape : function (mutator) {
       var instance = classes[mutator.shape] ? classes[mutator.shape](mutator): classes.rect(mutator);
-      instance.shape = mutator.shape;
+      instance.shape = mutator.shape || 'rect';
       var collideable = mutator.collideable? mutator.collideable: true;
       instance.setState("collideable", collideable);   // using class entity's FSM 
       
@@ -191,6 +193,7 @@
       }
       
       instance.addLayer = function (layerId, arr) {
+        console.log(layerId, arr);
         var layer = arr || []
         layers[layerId] = layer;
       }
@@ -205,274 +208,79 @@
       };
 
       instance.getDraw = function () {
+        //console.log(instance.layers);
+        
         return {
           type: "complex",
-          layers: instance.layers
+          layers: layers
         };
       }
       
       return instance;
       
-    },
-    // todo: make a GUI component class
-    component: function (mutator) {
-      var instance = classes.composite(mutator);
-      
-      var parent;
-      // a widget will be a component that contains components
-      
-      
-      return instance;
-    },
-    widget: function (mutator) {
-      mutator.shape = mutator.shape || "rect";
-      var instance = classes.component(mutator);
-      var padding = mutator.padding || 5;
-            
-      
-      var rows = [];
-      instance.addRow = function (callback) {
-        function rowFactory () {
-          var row = [];
-          row.w = 0;
-          row.h = 0;
-          row.addEntity = function (entity) {
-            row.push(entity.id);
-          };
-          row.getEntityDimensions = function (col) {
-            var dimensions = {};
-            var entity = entities[row[col]];
-            dimensions.w = entity.w;
-            dimensions.h = entity.h;
-            return dimensions;
-          };
-          
-          return row;
-        }
-        
-        var row = rowFactory();
-        rows.push(row);
-        if (typeof(callback) == "function") {
-          callback(row);
-        }
-      };
-      
-      instance.pack = function () {
-        // minimum size for parent container
-        function fillWidget () {
-          var maxW = 0;
-          var maxH = 0;
-          for (var i in rows) {
-            var row = rows[i];
-            row.w = 0; // reset these things
-            row.h = 0;
-            row.col = 0;
-            for (var j in row) {
-              row.col++; // calculate row
-              var entity = row[j];
-              row.w += entity.w;
-              row.h = entity.h > row.h? entity.h: row.h;
-            }
-            // apply padding. change widget width and height
-            row.h += (i + 1) * padding;
-            row.w += (row.col + 1) * padding;
-            maxW = row.w > maxW? row.w: maxW;
-            maxH += row.h;
-          }
-          instance.w = maxW;
-          instance.h = maxH;
-        }
-        
-        function placeComponents() {
-          var y = instance.y + padding;
-          for (var i in rows) {
-            var row = rows[i];
-            var x = instance.x + padding;
-            for (var j in row) {
-              var onColNum = 0;
-              var colW = row.col / instance.w;
-              
-              var entityId = row[j];
-              entites[entityId].x = x;
-              entites[entityId].y = y;
-              x = colW * onColNum + padding;
-            }
-            y += row.h + padding;
-          }
-        }
-        
-        fillWidget();
-        placeComponents();
-      };
-      
-      return instance;
-    },
-    text: function (mutator) {
-      mutator = mutator || {};
-      var color = mutator.color || "#fff";
-      var alpha = mutator.color || 1;
-      var font = mutator.font || "1em arial";
-      var string = mutator.string;
-      var instance = classes.sprite(mutator);
-      
-      
-      instance.changeText = function (callback) {
-        if ( typeof(callback) == "function") {
-          string = callback(string);
-        }
-        makeTextImage(); // reset image
-      };
-
-      instance.getDraw = function () {
-        return {
-          type: "text",
-          x: instance.x,
-          y: instance.y,
-          string: string,
-          color: color,
-          alpha: alpha,
-          font: font
-        };
-      };
-      
- 
-      // saving text to an image is more efficient than re-rendering text via canvas.
-      function makeTextImage() {
-        var tempCanvas = document.createElement("canvas");
-        tempCanvas.width = 50;
-        tempCanvas.height = 50;
-        var ctx = tempCanvas.getContext("2d");
-        
-        var dimensions = ctx.measureText(string);
-        tempCanvas.width = dimensions.width;
-        tempCanvas.height = 50;
-        
-        
-        ctx.font = font;
-        ctx.fillStyle = color;
-        ctx.globalAlpha = alpha;
-        
-        
-        ctx.fillText(string, 0, 10);
-        var url = tempCanvas.toDataURL();
-
-        //save string as a png in Assets. Once loaded, change draw.
-        jas.Asset.newImageFromCanvas("text-image:"+instance.id, url, function (image) {
-          document.appendChild(image);
-          
-          var draw = {
-            type: "sprite",
-            frame: {
-              sx: 0,
-              sy: 0,
-              sw: tempCanvas.width,
-              sh: tempCanvas.height,
-              x: instance.x,
-              y: instance.y,
-              w: tempCanvas.width,
-              h: tempCanvas.height
-            },
-            imageId: url
-          };
-          
-          instance.getDraw = function () {
-            return draw;
-          };
-
-        });
-      }
-      
-      makeTextImage();
-      
-      
-      return instance;
-    },
-    label : function (mutator) {
-      mutator = mutator || {};
-      
-      var instance = classes.component(mutator);
-      
-      var textMutator = mutator.text || {};
-      
-      var x = mutator.x;
-      var y = mutator.y;
-      var w = mutator.w;
-      var h = mutator.h;
-      
-      var text = classes.text({
-        string: mutator.string,
-        x: x,
-        y: y + h,
-        w: w,
-        h: h,
-        color: mutator.textColor,
-        alpha: mutator.textAlpha  
-      });
-      
-      //var frame = classes.rect(mutator.frame);
-      var shapeMutator = mutator.shape || {};
-      var shapeType = shapeMutator.type || "rect";
-
-      var container = classes.rect({
-        x: x,
-        y: y,
-        w: w,
-        h: h,
-        color: mutator.shapeColor,
-        alpha: mutator.shapeAlpha  
-      });
-      
-      //console.log(container);
-      instance.addLayers({
-        text: [text],
-        container:[container]
-      });
-      
-
-      instance.changeLabelText = function (callback) {
-        instance.getLayer("text")[0].changeText(callback);
-      };
-      
-      return instance;
     },
     sprite : function (mutator) {
+      // sprites support layers, so they are composite
       var instance = this.composite(mutator);
       
+      // inner factory
       function animationFactory(animMutator) {
-        // inner frame class
+        
+        // inner frame factory
         function frame (sx, sy, sw, sh) {
+          
           return {
             sx: sx,
             sy: sy,
             sw: sw,
             sh: sh
           };
+          
         }
         
+        // mutator for animation, separate from sprite mutator
         animMutator = animMutator? animMutator: {};
+        
         var animation = {};
         
+        // animations have names
         animation.name = animMutator.name;
         
+        // frames are determined using modular arithmetic
+        // based on the sprite sheet size. It's not possible
+        // to 'skip' frames in the sheet.
+        // frame from sprite sheet where animation starts
         var start = animMutator.start;
+        // frame on the sheet where the animation stops
         var stop = animMutator.stop;
-        var w = instance.w;// sub image w & h
+        // width of the animation
+        var w = instance.w;
         var h = instance.h;
         
+        // does it loop? no by default
         var looping = animMutator.looping? animMutator.looping: false;
+        // does it play forwards, and then backwards? no by default
         var pingpong = animMutator.pingpong? animMutator.pingpong: false;
         var fps = animMutator.fps? animMutator.fps: 12;
-        
+        // frames for the animation
         var frames = [];
+        
+        // iterate from the start value, up to stop value exclusive
         for ( var i = start; i < stop; i++) {
+          // using modular arithmetic to find the x of sub image 
           var x = (i * w) % imageW;
+          // using division to find the y value of sub image
           var y = Math.floor((i * w) / imageW) * h;
+          // create a frame (sub image) with the x y.
           frames.push(frame(x, y, w, h));
         }
         
+        // set default (ending) frame, set by user. default to last frame
         var defaultFrame = animMutator.defaultFrame || frames.length - 1;
         
-        animation.onend = animMutator.onend;
+        // callback when animation is over
+        var onenterframe = animMutator.onenterframe;
+        var onend = animMutator.onend;
         
         //console.log(stop);
         var currentFrame = 0;
@@ -482,11 +290,19 @@
         timer.start();
 
         animation.update = function () {
+          
           if (done) {
             return; 
           }
+          
+          // if it's time to change the frame...
           timer.checkTime(function() {
+            
+            // increment the frame
             var lastFrame = ++currentFrame >= frames.length;
+            
+            // calls onenterframe only if it is set
+            onenterframe && onenterframe(currentFrame);
             
             if (lastFrame && looping) {
               currentFrame = 0;
@@ -494,43 +310,55 @@
             
             else if (lastFrame) {
               currentFrame = defaultFrame || frames.length - 1;
-              if (typeof(animation.onend) == "function") {
-                animation.onend();
-              }
+              // only call onend if it exists
+              onend && onend();
+              
               done = true
             }
           });
         };
         
+        // get current frame
         animation.getCurrentFrame = function () {
           return frames[currentFrame];
         };
         
+        // reset animation
         animation.reset = function() {
           currentFrame = 0;
           done = false;
         };
         
+        // is it the default animation?
         if (animMutator.def) {
           instance.anim = animation;
         }
+        
         return animation;
+        
       }
+      // end animation class
       
-      
+      // sprite sheet used for sprite
       var imageId = mutator? mutator.imageId: null;
+      
+      // sprite sheet width and height
       var imageW = jas.Asset.getImage(imageId).width;
       var imageH = jas.Asset.getImage(imageId).height;
       
+      // sprites animation
       instance.animations = {};
       
+      // if there are no animations in the mutator, use a still image
       mutator.animations = mutator.animations || [{name:"still", start: 0, stop: 1, def: true}];
       
+      // build animations using each mutator
       for (var i in mutator.animations) {
         var animData = mutator.animations[i];
         instance.animations[animData.name] = animationFactory(animData);
       }
       
+      // sets the default animation
       instance.setAnim = function (animId) {
         instance.anim = instance.animations[animId];
       };
@@ -552,7 +380,7 @@
       
       instance.resetAnim = function (animId) {
         if (animId) {
-          instance.animation[animId].reset();
+          instance.animations[animId].reset();
         }
         else {
           instance.anim.reset();
@@ -591,6 +419,7 @@
       var spawnGroup = mutator.spawnGroup || null;
       var spawnMax = mutator.spawnMax || 10;
       var spawnIds = {};
+      var active = mutator.active || false;
       
       var timer = jas.Util.timer(spawnRate, intervalFixed);
       timer.start();
@@ -628,8 +457,8 @@
         getSpawnVector = getSpawnStrategy();  
       };
       
-      instance.spawn = (function () {
-        if (spawnCount < spawnMax) {
+      instance.spawn = function () {
+        if (spawnCount < spawnMax && active) {
           timer.checkTime(function() {
             var vector = getSpawnVector();
             spawnMutator.x = vector.x;
@@ -641,7 +470,15 @@
             
           });
         }
-      });
+      };
+      
+      instance.start = function () {
+        active = true;
+      };
+      
+      instance.stop = function () {
+        active = false;
+      }
       
       instance.removeSpawn = function (entity) {
         delete spawnIds[entity.id];
@@ -653,6 +490,13 @@
         delete spawnIds[id];
         jas.Entity.removeEntityById(id);
         spawnCount--;
+      };
+      
+      instance.clear = function () {
+        for (var i in spawnIds) {
+          var id = spawnIds[i];
+          instance.removeSpawnById(id);
+        }
       };
       
       return instance;

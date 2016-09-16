@@ -1,4 +1,13 @@
 (function (jas) {
+  
+  function isFunction (fn) {
+    if (typeof(fn) == "function")
+      return true;
+    
+    false; 
+  
+  }
+  
   function timerFactory(interval, isRandom) {
     var then;
     var done;
@@ -167,6 +176,7 @@
   
   
   jas.Util = {
+    isFunction: isFunction,
     timer: timerFactory,
     finiteStateMachine: finiteStateMachine,
     Graph: Graph

@@ -144,7 +144,7 @@
     };
     
     image.onerror = function (e) {
-      console.log(e);
+      //console.log(e);
     };
   
     image.src = imageRoot + path;
@@ -165,7 +165,6 @@
     var audio = new Howl ({
       urls: [audioRoot+path],
       onload: function () {
-        console.log(this);
         userCallback(this);
         assets.audio[name] = this;
       }
@@ -174,7 +173,7 @@
   
   function getAudio (name, callback) {
     var audio = assets.audio[name];
-    console.log(audio);
+    //console.log(audio);
     if (typeof(callback)=='function' && audio) {
       callback(audio);
       return audio;

@@ -5,13 +5,15 @@ Entity
       - give widgets some kind of 'repack' method.
       - widgets should have layer entities that fit into rows.
       - once it's improved, make text label extend 'component'
-  * add various shape classes that extend shape (really just a 'circ' class)
+      - should I just use abs positioned doms?
+  * add various shape classes that extend shape (really just improve 'circ' class)
       - shapes should share an interface of calcArea, getCenter, contains, isColliding
-      - shapes class is doing some weird recursive thing...
   * create a way to read entities from json.
+  * should I encapsulate entity x, y, w, h?
   
 Util
   * pathfinder
+  * Camera (how is this done best? is util appropriate, or graphics?)
   
 Init
   
@@ -20,7 +22,8 @@ Event
   
   
 Asset
-  * integrate howler. use it to build audio asset
+  * allow getMapData to parse compressed tmx files. Right now can only read plain text
+  
   * create an assetLoader?
     - would check if assets are loaded and then fire a callback like 'changeGameState' or w/e
   
@@ -31,6 +34,7 @@ Controller
   
   
 Graphics
-  * extra fancy webGL things
+  * extra fancy webGL things if possible
 
 Physics
+  * work on pinball and platformer physics
