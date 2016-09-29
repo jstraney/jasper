@@ -77,14 +77,7 @@ jas.addState("main",
     "playerGroup");
   },
   function update (delta, controller) {
-    var player;
-    
-    // WARNING: not idiomatic code. See the Controller module in the wiki
-    jas.Entity.getFirst("playerGroup", function() {
-      controller.keyIsDown("RIGHT", function () {
-        player.x++;
-      });
-    });
+    // no update logic for now
   },
   function render (graphics) {
     // render all entities in that group.
@@ -92,12 +85,9 @@ jas.addState("main",
   });
 ```
 
-Now, you should have a blue rectangle that can move right when the arrow key is pressed.
-Think of an entity as the 'stuff' in your games frame. An entity could be a player, a wall,
-a gui component, a clipping area for collision. It's a game object.
+Now, you should have a blue rectangle.Think of an entity as the 'stuff' in your games frame. An entity could be a player, a wall, a gui component, a clipping area for collision. It's a game object.
 
-Entities are manipulated through groups. a group can contain entities of various classes, but it's recommended they share an interface and purpose. If you
-think rectangles are repulsive, you can make it a special rectangle:
+Entities are manipulated through groups. a group can contain entities of various classes, but it's recommended they share an interface and purpose. If you think rectangles are repulsive, you can make it a special rectangle:
 
 ```js
 //add this to game state's init
@@ -111,9 +101,9 @@ jas.Entity.newClass("player", function(mutator) {
 	// private to the player class
   var spd = 1;
 
-  // this is idiomatic, as opposed to the last example
-  jas.Controller.inst({
-    RIGHT_DOWN: function () {
+  // You can add a controller in the class definition
+  var controller = jas.Controller.inst({
+    RIGHT_IS_DOWN: function () {
       instance.x += spd;
       if (instance.x > 200) {
         console.log("I am " + name + "!");
@@ -127,7 +117,13 @@ jas.Entity.newClass("player", function(mutator) {
 
 jas.Entity.addEntity(jas.Entity.inst("player", {name: "jeff"}), "playerGroup");
 ```
+Then in your update loop, provide the following:
 
+```js
+function update (time, controller) {
+  controller.isKeyDown('RIGHT');
+}
+```
 This is just a peak at some of the syntax and tools Jasper has to
 offer. To learn more, visit the
 [wiki](https://github.com/thrakish/jasper/wiki).
